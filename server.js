@@ -1,19 +1,27 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+
 const app = express();
 
+// 🔑 hasło z Render (Environment Variable)
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// ❗ zabezpieczenie — bez hasła serwer się nie odpali
+if (!ADMIN_PASSWORD) {
+    console.error("Brak ADMIN_PASSWORD!");
+    process.exit(1);
+}
+
 app.use(express.json());
+
 app.use(session({
-    secret: 'twoj-bardzo-dlugi-sekretny-klucz', // zmień to na cokolwiek
+    secret: 'jakis_dlugi_losowy_tekst_123',
     resave: false,
     saveUninitialized: true
 }));
 
-// TWOJE HASŁO
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
-// Logowanie
+// 🔐 logowanie
 app.post('/login', (req, res) => {
     if (req.body.pass === ADMIN_PASSWORD) {
         req.session.authenticated = true;
@@ -23,7 +31,7 @@ app.post('/login', (req, res) => {
     }
 });
 
-// Strażnik panelu - jeśli nie jesteś zalogowany, wywali Cię do logowania
+// 🧠 panel (tylko po zalogowaniu)
 app.get('/panel', (req, res) => {
     if (req.session.authenticated) {
         res.sendFile(path.join(__dirname, 'panel.html'));
@@ -32,9 +40,18 @@ app.get('/panel', (req, res) => {
     }
 });
 
+// 🚪 wylogowanie
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/');
+    });
+});
+
+// 🏠 strona logowania
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// 🚀 start serwera (ważne dla Render)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('CYPEK SYSTEM READY'));
+app.listen(PORT, () => console.log("SERVER DZIAŁA"));
