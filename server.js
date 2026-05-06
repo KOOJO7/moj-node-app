@@ -11,7 +11,7 @@ app.use(session({
 }));
 
 // TWOJE HASŁO
-const ADMIN_PASSWORD = "TU_WPISZ_SWOJE_HASLO";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 // Logowanie
 app.post('/login', (req, res) => {
