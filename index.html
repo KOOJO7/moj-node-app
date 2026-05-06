@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTH — CYPEK CONTROL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        /* Twoje zmienne i tło */
+        :root {
+            --bg: #0a0a0a; --panel: #111; --border: #1e1e1e;
+            --accent: #00ff88; --text: #e0e0e0; --font-mono: 'Share Tech Mono', monospace;
+        }
+        body {
+            background: var(--bg); color: var(--text); font-family: var(--font-mono);
+            display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, #1a1a1a 39px, #1a1a1a 40px),
+                              repeating-linear-gradient(90deg, transparent, transparent 39px, #1a1a1a 39px, #1a1a1a 40px);
+        }
+        .login-box {
+            width: 320px; padding: 40px; background: var(--panel); border: 1px solid var(--border);
+            position: relative; text-align: center;
+        }
+        .login-box::before { content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+        h1 { font-family: 'Bebas Neue'; letter-spacing: 4px; color: var(--accent); margin-bottom: 20px; }
+        input {
+            width: 100%; background: #000; border: 1px solid var(--border); color: var(--accent);
+            padding: 10px; margin-bottom: 20px; font-family: var(--font-mono); outline: none;
+        }
+        button {
+            width: 100%; padding: 12px; background: var(--accent); border: none; font-weight: bold;
+            cursor: pointer; font-family: var(--font-mono); letter-spacing: 2px;
+        }
+        .error { color: #ff3c3c; font-size: 12px; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>ACCESS REQUIRED</h1>
+        <input type="password" id="pass" placeholder="ENTER ACCESS KEY">
+        <button onclick="login()">AUTHORIZE</button>
+        <div id="error" class="error">INVALID ACCESS KEY</div>
+    </div>
+
+    <script>
+        async function login() {
+            const pass = document.getElementById('pass').value;
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({pass})
+            });
+            if(res.ok) {
+                window.location.href = '/panel';
+            } else {
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
