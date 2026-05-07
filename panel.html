@@ -44,8 +44,6 @@
       padding: 30px 24px 24px;
       position: relative;
     }
-
-    /* Narożniki jak w starym sprzęcie */
     .shell::before, .shell::after,
     .shell-inner::before, .shell-inner::after {
       content: '';
@@ -60,10 +58,7 @@
     .shell-inner::before { bottom: -25px; left: -1px;  border-width: 0 0 2px 2px; }
     .shell-inner::after  { bottom: -25px; right: -1px; border-width: 0 2px 2px 0; }
 
-    .header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
+    .header { text-align: center; margin-bottom: 24px; }
     .header h1 {
       font-family: var(--font-display);
       font-size: 3rem;
@@ -99,23 +94,11 @@
       flex-shrink: 0;
       transition: background 0.3s, box-shadow 0.3s;
     }
-    .status-dot.connected {
-      background: var(--accent);
-      box-shadow: 0 0 8px var(--accent);
-      animation: pulse 2s infinite;
-    }
-    .status-dot.error { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
-    .status-dot.connecting {
-      background: #ffaa00;
-      box-shadow: 0 0 8px #ffaa00;
-      animation: blink 0.5s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
-    }
-    @keyframes blink {
-      0%, 100% { opacity: 1; } 50% { opacity: 0; }
-    }
+    .status-dot.connected { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s infinite; }
+    .status-dot.error     { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+    .status-dot.connecting { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; animation: blink 0.5s infinite; }
+    @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes blink  { 0%,100%{opacity:1} 50%{opacity:0} }
     #statusText { color: var(--text); flex: 1; }
 
     /* PRZYCISK POŁĄCZ */
@@ -135,29 +118,19 @@
       position: relative;
       overflow: hidden;
     }
-    .btn-connect::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--accent3);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
+    .btn-connect::before { content:''; position:absolute; inset:0; background:var(--accent3); opacity:0; transition:opacity .2s; }
     .btn-connect:hover::before { opacity: 0.08; }
     .btn-connect:active { transform: scale(0.99); }
     .btn-connect:disabled { border-color: var(--dim); color: var(--dim); cursor: not-allowed; }
     .btn-connect:disabled::before { display: none; }
 
-    /* SEKCJA WATÓW */
-    .waty-section {
+    /* SEKCJA — wspólny wrapper */
+    .ble-section {
       opacity: 0.3;
       pointer-events: none;
       transition: opacity 0.4s;
     }
-    .waty-section.active {
-      opacity: 1;
-      pointer-events: all;
-    }
+    .ble-section.active { opacity: 1; pointer-events: all; }
 
     .section-label {
       font-size: 10px;
@@ -167,11 +140,85 @@
       margin-bottom: 16px;
     }
 
-    /* WYŚWIETLACZ WATÓW */
-    .waty-display {
+    /* SEPARATOR */
+    .sep {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0;
+    }
+
+    /* ===== SEKCJA LICZNIKA ===== */
+    .licznik-display {
       text-align: center;
       margin-bottom: 20px;
     }
+    .licznik-display .lval {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      color: var(--accent3);
+      line-height: 1;
+      text-shadow: 0 0 30px rgba(51,204,255,0.3);
+      transition: color 0.15s, text-shadow 0.15s;
+    }
+    .licznik-display .lval.flash-up {
+      color: #fff;
+      text-shadow: 0 0 40px rgba(0,255,136,0.8);
+    }
+    .licznik-display .lval.flash-down {
+      color: var(--accent2);
+      text-shadow: 0 0 40px rgba(255,60,60,0.8);
+    }
+    .licznik-display .lval.flash-reset {
+      color: #ffaa00;
+      text-shadow: 0 0 40px rgba(255,170,0,0.8);
+    }
+    .licznik-display .lunit {
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 4px;
+      margin-top: 4px;
+    }
+
+    /* Trzy przyciski licznika */
+    .licznik-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .l-btn {
+      padding: 14px 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 1px;
+    }
+    .l-btn.plus  { color: var(--accent);  border-color: var(--accent); }
+    .l-btn.minus { color: var(--accent2); border-color: var(--accent2); }
+    .l-btn.reset { color: #ffaa00;        border-color: #ffaa00; font-size: 11px; letter-spacing: 2px; }
+    .l-btn.plus:hover  { background: rgba(0,255,136,0.08); }
+    .l-btn.minus:hover { background: rgba(255,60,60,0.08); }
+    .l-btn.reset:hover { background: rgba(255,170,0,0.08); }
+    .l-btn:active { transform: scale(0.97); }
+
+    .l-feedback {
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 2px;
+      height: 16px;
+      color: transparent;
+      transition: color 0.2s;
+      margin-bottom: 4px;
+    }
+    .l-feedback.ok  { color: var(--accent); }
+    .l-feedback.err { color: var(--accent2); }
+    .l-feedback.warn { color: #ffaa00; }
+
+    /* ===== SEKCJA WATÓW ===== */
+    .waty-display { text-align: center; margin-bottom: 20px; }
     .waty-display .value {
       font-family: var(--font-display);
       font-size: 5rem;
@@ -180,29 +227,15 @@
       text-shadow: 0 0 30px rgba(0,255,136,0.3);
       transition: color 0.2s;
     }
-    .waty-display .value.changed {
-      color: #fff;
-      text-shadow: 0 0 30px rgba(255,255,255,0.5);
-    }
-    .waty-display .unit {
-      font-size: 14px;
-      color: var(--dim);
-      letter-spacing: 3px;
-      margin-top: 4px;
-    }
+    .waty-display .value.changed { color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.5); }
+    .waty-display .unit { font-size: 14px; color: var(--dim); letter-spacing: 3px; margin-top: 4px; }
 
-    /* SUWAK */
-    .slider-wrap {
-      margin-bottom: 20px;
-      position: relative;
-    }
+    .slider-wrap { margin-bottom: 20px; }
     input[type=range] {
       -webkit-appearance: none;
-      width: 100%;
-      height: 2px;
+      width: 100%; height: 2px;
       background: var(--border);
-      outline: none;
-      cursor: pointer;
+      outline: none; cursor: pointer;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
@@ -214,21 +247,9 @@
       transition: transform 0.1s;
     }
     input[type=range]::-webkit-slider-thumb:active { transform: scale(1.3); }
-    .slider-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--dim);
-      margin-top: 8px;
-    }
+    .slider-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); margin-top:8px; }
 
-    /* PRZYCISKI SZYBKIEGO WYBORU */
-    .quick-btns {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      margin-bottom: 20px;
-    }
+    .quick-btns { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:20px; }
     .q-btn {
       padding: 8px 4px;
       background: transparent;
@@ -240,56 +261,30 @@
       transition: all 0.15s;
       text-align: center;
     }
-    .q-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .q-btn.active {
-      background: var(--accent);
-      color: #000;
-      border-color: var(--accent);
-      font-weight: bold;
-    }
+    .q-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .q-btn.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:bold; }
 
-    /* PRZYCISK WYŚLIJ */
     .btn-send {
-      width: 100%;
-      padding: 16px;
-      background: var(--accent);
-      border: none;
-      color: #000;
-      font-family: var(--font-mono);
-      font-size: 14px;
-      font-weight: bold;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
+      width: 100%; padding: 16px;
+      background: var(--accent); border: none; color: #000;
+      font-family: var(--font-mono); font-size: 14px;
+      font-weight: bold; letter-spacing: 4px; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s;
     }
     .btn-send:hover { background: #00ffaa; }
     .btn-send:active { transform: scale(0.99); }
     .btn-send:disabled { background: var(--dim); color: #000; cursor: not-allowed; }
 
-    /* SEND FEEDBACK */
     .send-feedback {
-      text-align: center;
-      font-size: 11px;
-      letter-spacing: 2px;
-      height: 18px;
-      margin-top: 10px;
-      color: transparent;
-      transition: color 0.3s;
+      text-align: center; font-size: 11px; letter-spacing: 2px;
+      height: 18px; margin-top: 10px;
+      color: transparent; transition: color 0.3s;
     }
-    .send-feedback.ok { color: var(--accent); }
+    .send-feedback.ok  { color: var(--accent); }
     .send-feedback.err { color: var(--accent2); }
 
-    /* FOOTER */
-    .footer {
-      text-align: center;
-      margin-top: 28px;
-      font-size: 10px;
-      color: #2a2a2a;
-      letter-spacing: 3px;
-    }
+    .footer { text-align:center; margin-top:28px; font-size:10px; color:#2a2a2a; letter-spacing:3px; }
 
-    /* iOS / brak Web BT */
     .no-bt-warning {
       display: none;
       padding: 14px;
@@ -324,11 +319,31 @@
     </div>
 
     <button class="btn-connect" id="connectBtn" onclick="connectBLE()">
-      ▶ POŁĄCZ Z CYPEKTAURUS-BT
+      ▶ POŁĄCZ Z CYPEK-BT
     </button>
 
-    <div class="waty-section" id="watySection">
-      <div class="section-label">// moc </div>
+    <!-- ===== LICZNIK ===== -->
+    <div class="ble-section" id="licznikSection">
+      <div class="section-label">// licznik</div>
+
+      <div class="licznik-display">
+        <div class="lval" id="licznikDisplay">—</div>
+        <div class="lunit">PUNKTY</div>
+      </div>
+
+      <div class="licznik-btns">
+        <button class="l-btn plus"  onclick="cmdLicznik('plus')">+1</button>
+        <button class="l-btn minus" onclick="cmdLicznik('minus')">−1</button>
+        <button class="l-btn reset" onclick="cmdLicznik('reset')">RESET</button>
+      </div>
+      <div class="l-feedback" id="lFeedback"></div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- ===== WATY ===== -->
+    <div class="ble-section" id="watySection">
+      <div class="section-label">// moc</div>
 
       <div class="waty-display">
         <div class="value" id="watyDisplay">15</div>
@@ -339,17 +354,11 @@
         <input type="range" id="watySlider" min="5" max="200" step="5" value="15"
           oninput="onSliderInput(this.value)">
         <div class="slider-labels">
-          <span>5W</span>
-          <span>50W</span>
-          <span>100W</span>
-          <span>150W</span>
-          <span>200W</span>
+          <span>5W</span><span>50W</span><span>100W</span><span>150W</span><span>200W</span>
         </div>
       </div>
 
-      <div class="quick-btns" id="quickBtns">
-        <!-- wypełniane przez JS -->
-      </div>
+      <div class="quick-btns" id="quickBtns"></div>
 
       <button class="btn-send" id="sendBtn" onclick="sendWaty()">
         ↑ WYŚLIJ DO ESP32
@@ -364,23 +373,25 @@
 
 <script>
   // ======== UUID — IDENTYCZNE JAK W ARDUINO ========
-  const SERVICE_UUID        = "12345678-1234-1234-1234-123456789012";
-  const CHARACTERISTIC_UUID = "87654321-4321-4321-4321-210987654321";
+  const SERVICE_UUID         = "12345678-1234-1234-1234-123456789012";
+  const CHAR_WATY_UUID       = "87654321-4321-4321-4321-210987654321";
+  const CHAR_LICZNIK_UUID    = "11223344-1122-1122-1122-112233445566"; // nowa char
   // =================================================
 
   const QUICK_VALUES = [10, 20, 40, 60, 80, 100, 130, 160, 200];
 
-  let bleDevice = null;
-  let bleCharacteristic = null;
-  let currentWaty = 15;
+  let bleDevice         = null;
+  let charWaty          = null;
+  let charLicznik       = null;
+  let currentWaty       = 15;
+  let currentLicznik    = 0;
 
-  // Sprawdź czy Web Bluetooth jest dostępny
   if (!navigator.bluetooth) {
     document.getElementById('noBtWarning').style.display = 'block';
     document.getElementById('connectBtn').disabled = true;
   }
 
-  // Generuj przyciski szybkiego wyboru
+  // Przyciski szybkiego wyboru watów
   const quickWrap = document.getElementById('quickBtns');
   QUICK_VALUES.forEach(w => {
     const b = document.createElement('button');
@@ -391,40 +402,79 @@
     quickWrap.appendChild(b);
   });
 
+  // -------- STATUS --------
   function setStatus(text, state) {
-    // state: 'idle' | 'connecting' | 'connected' | 'error'
     document.getElementById('statusText').textContent = text;
     const dot = document.getElementById('statusDot');
     dot.className = 'status-dot';
-    if (state === 'connected') dot.classList.add('connected');
+    if (state === 'connected')  dot.classList.add('connected');
     else if (state === 'error') dot.classList.add('error');
     else if (state === 'connecting') dot.classList.add('connecting');
   }
 
+  // -------- WATY --------
   function setWaty(val) {
     currentWaty = val;
     document.getElementById('watyDisplay').textContent = val;
     document.getElementById('watySlider').value = val;
-
-    // Podświetl aktywny przycisk szybkiego wyboru
     document.querySelectorAll('.q-btn').forEach(b => {
       b.classList.toggle('active', parseInt(b.dataset.val) === val);
     });
-
-    // Flash na wyświetlaczu
     const disp = document.getElementById('watyDisplay');
     disp.classList.add('changed');
     setTimeout(() => disp.classList.remove('changed'), 200);
   }
 
-  function onSliderInput(val) {
-    setWaty(parseInt(val));
+  function onSliderInput(val) { setWaty(parseInt(val)); }
+
+  // -------- LICZNIK --------
+  function setLicznik(val) {
+    currentLicznik = val;
+    document.getElementById('licznikDisplay').textContent = val;
   }
 
+  function flashLicznik(type) {
+    // type: 'flash-up' | 'flash-down' | 'flash-reset'
+    const el = document.getElementById('licznikDisplay');
+    el.classList.add(type);
+    setTimeout(() => el.classList.remove(type), 300);
+  }
+
+  function lFeedback(msg, cls) {
+    const el = document.getElementById('lFeedback');
+    el.textContent = msg;
+    el.className = 'l-feedback ' + cls;
+    setTimeout(() => { el.className = 'l-feedback'; }, 2000);
+  }
+
+  async function cmdLicznik(cmd) {
+    if (!charLicznik) return;
+
+    // cmd: 'plus' | 'minus' | 'reset'
+    try {
+      const encoder = new TextEncoder();
+      await charLicznik.writeValue(encoder.encode(cmd));
+
+      // Odczytaj zaktualizowaną wartość
+      const val = await charLicznik.readValue();
+      const decoded = parseInt(new TextDecoder().decode(val));
+      if (!isNaN(decoded)) {
+        setLicznik(decoded);
+        if (cmd === 'plus')  flashLicznik('flash-up');
+        if (cmd === 'minus') flashLicznik('flash-down');
+        if (cmd === 'reset') flashLicznik('flash-reset');
+        lFeedback(cmd === 'reset' ? '✓ RESET' : (cmd === 'plus' ? '✓ +1' : '✓ −1'), 'ok');
+      }
+    } catch (err) {
+      lFeedback('✗ BŁĄD', 'err');
+      console.error(err);
+    }
+  }
+
+  // -------- CONNECT BLE --------
   async function connectBLE() {
     const btn = document.getElementById('connectBtn');
 
-    // Jeśli już połączono — rozłącz
     if (bleDevice && bleDevice.gatt.connected) {
       bleDevice.gatt.disconnect();
       return;
@@ -445,26 +495,34 @@
       setStatus('Pobieranie serwisu...', 'connecting');
       const service = await server.getPrimaryService(SERVICE_UUID);
 
-      bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+      // Obie charakterystyki
+      charWaty    = await service.getCharacteristic(CHAR_WATY_UUID);
+      charLicznik = await service.getCharacteristic(CHAR_LICZNIK_UUID);
 
-      // Odczytaj aktualną wartość watów z ESP32
-      const val = await bleCharacteristic.readValue();
-      const decoder = new TextDecoder();
-      const watyFromESP = parseInt(decoder.decode(val));
+      // Odczytaj aktualne wartości z ESP32
+      const watyVal = await charWaty.readValue();
+      const watyFromESP = parseInt(new TextDecoder().decode(watyVal));
       if (!isNaN(watyFromESP)) setWaty(watyFromESP);
+
+      const licznikVal = await charLicznik.readValue();
+      const licznikFromESP = parseInt(new TextDecoder().decode(licznikVal));
+      if (!isNaN(licznikFromESP)) setLicznik(licznikFromESP);
 
       setStatus('Połączono: ' + bleDevice.name, 'connected');
       btn.textContent = '■ ROZŁĄCZ';
       btn.disabled = false;
-      document.getElementById('watySection').classList.add('active');
 
-      // Obsługa rozłączenia
+      document.getElementById('watySection').classList.add('active');
+      document.getElementById('licznikSection').classList.add('active');
+
       bleDevice.addEventListener('gattserverdisconnected', () => {
         setStatus('Rozłączono', 'idle');
         btn.textContent = '▶ POŁĄCZ Z CYPEK-BT';
         btn.disabled = false;
         document.getElementById('watySection').classList.remove('active');
-        bleCharacteristic = null;
+        document.getElementById('licznikSection').classList.remove('active');
+        charWaty = null;
+        charLicznik = null;
       });
 
     } catch (err) {
@@ -480,16 +538,15 @@
     }
   }
 
+  // -------- WYŚLIJ WATY --------
   async function sendWaty() {
-    if (!bleCharacteristic) return;
+    if (!charWaty) return;
     const feedback = document.getElementById('sendFeedback');
     const btn = document.getElementById('sendBtn');
-
     try {
       btn.disabled = true;
       const encoder = new TextEncoder();
-      await bleCharacteristic.writeValue(encoder.encode(String(currentWaty)));
-
+      await charWaty.writeValue(encoder.encode(String(currentWaty)));
       feedback.textContent = '✓ WYSŁANO ' + currentWaty + 'W';
       feedback.className = 'send-feedback ok';
     } catch (err) {
