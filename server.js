@@ -1,42 +1,62 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const nodemailer = require('nodemailer'); // <--- MUSISZ TO DODAĆ NA GÓRZE
 const app = express();
 
-// 🔑 hasło z Render (Environment Variable)
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-// ❗ zabezpieczenie — bez hasła serwer się nie odpali
 if (!ADMIN_PASSWORD) {
     console.error("Brak ADMIN_PASSWORD!");
     process.exit(1);
 }
 
+// Obsługa danych z formularzy (ważne, żeby mail zadziałał!)
+app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
+
 app.use(session({
     secret: process.env.SESSION_SECRET || 'cypek_secret_2026',
     resave: false,
     saveUninitialized: false
 }));
 
-// ─── PUBLICZNE (bez logowania) ───────────────────────────────
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// ─── PUBLICZNE TRASY ─────────────────────────────────────────
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/home', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
+app.get('/page3', (req, res) => res.sendFile(path.join(__dirname, 'page3.html')));
+app.get('/kontakt', (req, res) => res.sendFile(path.join(__dirname, 'kontakt.html')));
+
+// ─── OBSŁUGA FORMULARZA KONTAKTOWEGO ─────────────────────────
+app.post('/send-email', (req, res) => {
+    const { name, email, reason, message } = req.body;
+
+    const transporter = nodemailer.createTransport({
+        host: "serwer2682951.home.pl", // Sprawdź ten numer w panelu home!
+        port: 465,
+        secure: true, 
+        auth: {
+            user: "kontakt@lecimyszacunek.pl",
+            pass: "11kojo11" // Twoje hasło z obrazka
+        }
+    });
+
+    const mailOptions = {
+        from: 'kontakt@lecimyszacunek.pl',
+        to: 'TWÓJ_PRYWATNY_MAIL@gmail.com', // <--- WPISZ SWÓJ GMAIL
+        subject: `KONTAKT: ${reason} od ${name}`,
+        text: `Od: ${name} (${email})\nCel: ${reason}\n\nWiadomość:\n${message}`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            return res.status(500).send("Błąd: " + error.toString());
+        }
+        res.send("<h1>WYSŁANO TRANSMISJĘ!</h1><br><a href='/home' style='color:green; font-family:monospace;'>POWRÓT NA BAZĘ</a>");
+    });
 });
 
-app.get('/home', (req, res) => {
-    res.sendFile(path.join(__dirname, 'home.html'));
-});
-
-app.get('/page3', (req, res) => {
-    res.sendFile(path.join(__dirname, 'page3.html'));
-});
-
-app.get('/kontakt', (req, res) => {
-    res.sendFile(path.join(__dirname, 'kontakt.html'));
-});
-
-// ─── LOGOWANIE ───────────────────────────────────────────────
+// ─── LOGOWANIE I RESZTA ──────────────────────────────────────
 app.post('/login', (req, res) => {
     if (req.body.pass === ADMIN_PASSWORD) {
         req.session.authenticated = true;
@@ -46,7 +66,6 @@ app.post('/login', (req, res) => {
     }
 });
 
-// ─── CHRONIONE (tylko po zalogowaniu) ────────────────────────
 app.get('/panel', (req, res) => {
     if (req.session.authenticated) {
         res.sendFile(path.join(__dirname, 'panel.html'));
@@ -55,18 +74,11 @@ app.get('/panel', (req, res) => {
     }
 });
 
-// ─── WYLOGOWANIE ─────────────────────────────────────────────
 app.get('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/');
-    });
+    req.session.destroy(() => res.redirect('/'));
 });
 
-// ─── FALLBACK — nieznany URL → strona główna ─────────────────
-app.use((req, res) => {
-    res.redirect('/home');
-});
+app.use((req, res) => res.redirect('/home'));
 
-// ─── START ───────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`SERVER DZIAŁA na porcie ${PORT}`));
