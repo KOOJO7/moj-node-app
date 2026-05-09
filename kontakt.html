@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KONTAKT — lecimyszacunek.pl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a; --panel: #111; --border: #1e1e1e;
+      --accent: #00ff88; --accent2: #ff3c3c; --accent3: #3cf;
+      --text: #e0e0e0; --dim: #444; --dim2: #2a2a2a;
+      --nav-w: 220px;
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-display: 'Bebas Neue', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--font-mono);
+      display: flex; min-height: 100vh;
+      background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, #111 39px, #111 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, #111 39px, #111 40px);
+    }
+    
+    /* NAV */
+    nav { width:var(--nav-w); min-height:100vh; background:#0d0d0d; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:36px 0 24px; position:fixed; }
+    .nav-logo { padding:0 24px 32px; border-bottom:1px solid var(--border); }
+    .nav-logo h1 { font-family:var(--font-display); font-size:1.6rem; letter-spacing:4px; color:var(--accent); }
+    .nav-links { flex:1; padding:24px 0; display:flex; flex-direction:column; gap:2px; }
+    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 24px; color:var(--dim); text-decoration:none; font-size:11px; letter-spacing:3px; text-transform:uppercase; transition:0.15s; border-left:2px solid transparent; }
+    .nav-link:hover { color:var(--text); background:rgba(255,255,255,0.03); }
+    .nav-link.active { color:var(--accent2); border-left-color:var(--accent2); background:rgba(255,60,60,0.04); }
+
+    main { margin-left:var(--nav-w); flex:1; padding:60px 40px; display: flex; justify-content: center; align-items: center; }
+
+    .contact-card { max-width: 600px; width: 100%; background: rgba(17,17,17,0.9); border: 1px solid var(--border); padding: 40px; position: relative; }
+    .contact-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 20px; height: 20px; border-top: 2px solid var(--accent2); border-left: 2px solid var(--accent2); }
+
+    h2 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent2); letter-spacing: 4px; margin-bottom: 30px; }
+    
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    
+    input, select, textarea {
+      width: 100%; background: #080808; border: 1px solid var(--border);
+      padding: 12px; color: #fff; font-family: var(--font-mono); font-size: 13px; outline: none;
+      transition: 0.3s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,60,60,0.1); }
+    
+    option { background: var(--panel); }
+
+    .submit-btn {
+      width: 100%; padding: 15px; background: transparent; border: 1px solid var(--accent2);
+      color: var(--accent2); font-family: var(--font-display); font-size: 1.2rem;
+      letter-spacing: 3px; cursor: pointer; transition: 0.3s; margin-top: 10px;
+    }
+    .submit-btn:hover { background: var(--accent2); color: #000; box-shadow: 0 0 20px rgba(255,60,60,0.4); }
+
+    @media (max-width:800px) {
+      nav { display: none; }
+      main { margin-left: 0; padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo"><h1>CYPEK</h1><div class="sub" style="font-size:9px; color:var(--dim);">lecimyszacunek.pl</div></div>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"><span class="icon">◈</span> Główna</a>
+      <a href="index.html" class="nav-link"><span class="icon">⬡</span> Panel BLE</a>
+      <a href="page3.html" class="nav-link"><span class="icon">🛒</span> Sklep</a>
+      <a href="kontakt.html" class="nav-link active"><span class="icon">✉</span> Kontakt</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="contact-card">
+      <h2>LUŹNE PYTANKO</h2>
+      <form action="send.php" method="POST">
+        <div class="form-group">
+          <label>Twoje imię </label>
+          <input type="text" name="name" placeholder="PODAJ KSYWE....🤣🤣" required>
+        </div>
+        
+        <div class="form-group">
+          <label>E-mail </label>
+          <input type="email" name="email" placeholder="MAIL@DOMENA.PL" required>
+        </div>
+
+        <div class="form-group">
+          <label>Cel Twojej wizyty</label>
+          <select name="reason">
+            <option value="problem_zakup">PROBLEM Z ZAKUPEM</option>
+            <option value="zakup_towaru">CHCE KUPIĆ TOWAR</option>
+            <option value="sad">JAK UNIKNĄĆ SPRAWY SĄDOWEJ</option>
+            <option value="tluste_plecy">GDZIE ZNAJDĘ TŁUSTE PLECY NA WARMI LUB MAZURACH</option>
+            <option value="inne">INNE (BEZ SENSU)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Treść wiadomości</label>
+          <textarea name="message" rows="5" placeholder="PISZ TUTAJ..." required></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">WYŚLIJ TRANSMISJĘ</button>
+      </form>
+    </div>
+  </main>
+
+</body>
+</html>
