@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CYPEKTAURUS — lecimyszacunek.pl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a; --panel: #111; --border: #1e1e1e;
+      --accent: #00ff88; --accent2: #ff3c3c; --accent3: #3cf;
+      --text: #e0e0e0; --dim: #444; --dim2: #2a2a2a;
+      --nav-w: 220px;
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-display: 'Bebas Neue', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-mono);
+      display: flex; min-height: 100vh;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, #111 39px, #111 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, #111 39px, #111 40px);
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      width: var(--nav-w);
+      min-height: 100vh;
+      background: #0d0d0d;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 36px 0 24px;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      padding: 0 24px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo h1 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      letter-spacing: 4px;
+      color: var(--accent);
+      line-height: 1;
+      text-shadow: 0 0 16px rgba(0,255,136,0.3);
+    }
+    .nav-logo .sub {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 3px;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
+    .nav-links {
+      flex: 1;
+      padding: 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 24px;
+      color: var(--dim);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+      position: relative;
+    }
+    .nav-link .icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .nav-link:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+      border-left-color: var(--dim);
+    }
+    .nav-link.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: rgba(0,255,136,0.04);
+    }
+    .nav-link.active .icon { text-shadow: 0 0 8px rgba(0,255,136,0.5); }
+
+    .nav-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 9px;
+      color: var(--dim2);
+      letter-spacing: 2px;
+    }
+
+    /* ===== CONTENT ===== */
+    main {
+      margin-left: var(--nav-w);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      min-height: 100vh;
+    }
+
+    .hero {
+      max-width: 580px;
+      width: 100%;
+    }
+
+    /* Duży tytuł */
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 10vw, 7rem);
+      letter-spacing: 6px;
+      color: var(--accent);
+      line-height: 0.9;
+      text-shadow: 0 0 40px rgba(0,255,136,0.2);
+      margin-bottom: 8px;
+    }
+    .hero-title span {
+      display: block;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      color: var(--dim);
+      letter-spacing: 8px;
+      text-shadow: none;
+      margin-top: 4px;
+    }
+
+    /* Separator z linia */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 32px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider span {
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--dim);
+      text-transform: uppercase;
+    }
+
+    /* Opis */
+    .hero-desc {
+      font-size: 13px;
+      line-height: 1.9;
+      color: #777;
+      margin-bottom: 40px;
+      letter-spacing: 0.5px;
+    }
+    .hero-desc strong { color: var(--accent); font-weight: normal; }
+
+    /* Kafelki szybkiego dostępu */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .q-card {
+      display: block;
+      padding: 20px;
+      border: 1px solid var(--border);
+      background: #0d0d0d;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .q-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .q-card.green::before  { background: radial-gradient(ellipse at top left, rgba(0,255,136,0.06), transparent 70%); }
+    .q-card.blue::before   { background: radial-gradient(ellipse at top left, rgba(51,204,255,0.06), transparent 70%); }
+    .q-card.red::before    { background: radial-gradient(ellipse at top left, rgba(255,60,60,0.06), transparent 70%); }
+    .q-card:hover::before  { opacity: 1; }
+    .q-card:hover { border-color: #333; transform: translateY(-1px); }
+    .q-card:active { transform: scale(0.99); }
+
+    .q-card .c-icon { font-size: 20px; margin-bottom: 10px; display: block; }
+    .q-card .c-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      letter-spacing: 3px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .q-card.green .c-title { color: var(--accent); }
+    .q-card.blue  .c-title { color: var(--accent3); }
+    .q-card.red   .c-title { color: var(--accent2); }
+    .q-card .c-sub {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Narożnik dekoracyjny na karcie */
+    .q-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 0 0 20px 20px;
+      border-color: transparent transparent var(--border) transparent;
+      transition: border-color 0.2s;
+    }
+    .q-card:hover::after { border-bottom-color: #333; }
+
+    /* STATUS bar na dole hero */
+    .status-strip {
+      margin-top: 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      background: #0d0d0d;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--dim);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-strip .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      nav {
+        width: 100%;
+        min-height: auto;
+        height: auto;
+        position: relative;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 16px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-logo { padding: 0 16px 0 0; border: none; }
+      .nav-links { flex-direction: row; padding: 0; gap: 0; }
+      .nav-link { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; font-size: 9px; }
+      .nav-link.active { border-left: none; border-bottom-color: var(--accent); }
+      .nav-footer { display: none; }
+      main { margin-left: 0; padding: 30px 20px; }
+      body { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAWIGACJA BOCZNA -->
+  <nav>
+    <div class="nav-logo">
+      <h1>CYPEK</h1>
+      <div class="sub">lecimyszacunek.pl</div>
+    </div>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link active">
+        <span class="icon">◈</span> Główna
+      </a>
+      <a href="index.html" class="nav-link">
+        <span class="icon">⬡</span> Panel BLE
+      </a>
+      <a href="page3.html" class="nav-link">
+        <span class="icon">◇</span> <!-- NAZWA DO EDYCJI -->
+        Strona 3
+      </a>
+    </div>
+    <div class="nav-footer">
+      v1.0 &nbsp;·&nbsp; KG200 &nbsp;·&nbsp; 2026
+    </div>
+  </nav>
+
+  <!-- GŁÓWNA TREŚĆ -->
+  <main>
+    <div class="hero">
+      <div class="hero-title">
+        CYPEK<br>TAURUS
+        <span>KG200 SYSTEM</span>
+      </div>
+
+      <div class="divider"><span>system overview</span></div>
+
+      <p class="hero-desc">
+        Panel sterowania urządzeniem <strong>CYPEKTAURUS KG200</strong>.<br>
+        Połącz się przez Bluetooth LE żeby zdalnie zmieniać
+        <strong>moc lasera</strong> i zarządzać <strong>licznikiem</strong>
+        bez dotykania sprzętu.
+      </p>
+
+      <div class="quick-grid">
+        <a href="index.html" class="q-card green">
+          <span class="c-icon">⬡</span>
+          <span class="c-title">PANEL BLE</span>
+          <span class="c-sub">Sterowanie urządzeniem</span>
+        </a>
+        <a href="page3.html" class="q-card blue">
+          <span class="c-icon">◇</span>
+          <span class="c-title">STRONA 3</span>
+          <span class="c-sub">Do edycji</span>
+        </a>
+      </div>
+
+      <div class="status-strip">
+        <div class="dot"></div>
+        SYSTEM ONLINE &nbsp;·&nbsp; lecimyszacunek.pl &nbsp;·&nbsp; 2026
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
