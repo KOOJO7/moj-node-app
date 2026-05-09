@@ -32,20 +32,19 @@ app.post('/send-email', (req, res) => {
     const { name, email, reason, message } = req.body;
 
     const transporter = nodemailer.createTransport({
-        host: "poczta.home.pl", // To jest uniwersalny host dla wszystkich usług w home.pl
-        port: 465,
-        secure: true, // true dla portu 465
+        host: "poczta.home.pl",
+        port: 587,
+        secure: false, // Port 587 musi mieć secure: false
         auth: {
             user: "kontakt@lecimyszacunek.pl",
             pass: process.env.MAIL_PASS || "11kojo11"
         },
-        connectionTimeout: 10000, // 10 sekund i przerywamy czekanie
-        greetingTimeout: 5000,
-        socketTimeout: 10000,
         tls: {
-            // To jest KLUCZOWE na Renderze - ignoruje błędy certyfikatów przy połączeniach między serwerami
-            rejectUnauthorized: false
-        }
+            // To wymusza połączenie nawet jeśli certyfikat wygasł lub jest nieznany
+            rejectUnauthorized: false,
+            ciphers: 'SSLv3'
+        },
+        connectionTimeout: 15000 // Zwiększamy do 15s
     });
     const mailOptions = {
         from: 'kontakt@lecimyszacunek.pl',
