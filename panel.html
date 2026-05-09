@@ -36,8 +36,8 @@
     main { margin-left:var(--nav-w); flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; min-height:100vh; }
     .shell { width:100%; max-width:420px; border:1px solid var(--border); background:var(--panel); padding:30px 24px 24px; position:relative; }
     .shell::before,.shell::after,.shell-inner::before,.shell-inner::after { content:''; position:absolute; width:12px; height:12px; border-color:var(--accent); border-style:solid; }
-    .shell::before  { top:-1px;  left:-1px;  border-width:2px 0 0 2px; }
-    .shell::after   { top:-1px;  right:-1px; border-width:2px 2px 0 0; }
+    .shell::before  { top:-1px; left:-1px;  border-width:2px 0 0 2px; }
+    .shell::after   { top:-1px; right:-1px; border-width:2px 2px 0 0; }
     .shell-inner { position:relative; }
     .shell-inner::before { bottom:-25px; left:-1px;  border-width:0 0 2px 2px; }
     .shell-inner::after  { bottom:-25px; right:-1px; border-width:0 2px 2px 0; }
@@ -63,9 +63,9 @@
     .sep { border:none; border-top:1px solid var(--border); margin:28px 0; }
     .licznik-display { text-align:center; margin-bottom:20px; }
     .lval { font-family:var(--font-display); font-size:5rem; color:var(--accent3); line-height:1; text-shadow:0 0 30px rgba(51,204,255,0.3); transition:color .15s,text-shadow .15s; }
-    .lval.flash-up    { color:#fff;          text-shadow:0 0 40px rgba(0,255,136,0.9); }
+    .lval.flash-up    { color:#fff;           text-shadow:0 0 40px rgba(0,255,136,0.9); }
     .lval.flash-down  { color:var(--accent2); text-shadow:0 0 40px rgba(255,60,60,0.9); }
-    .lval.flash-reset { color:#ffaa00;       text-shadow:0 0 40px rgba(255,170,0,0.9); }
+    .lval.flash-reset { color:#ffaa00;        text-shadow:0 0 40px rgba(255,170,0,0.9); }
     .lunit { font-size:11px; color:var(--dim); letter-spacing:4px; margin-top:4px; }
     .l-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
     .l-col-label { font-size:9px; letter-spacing:3px; color:var(--dim); text-align:center; margin-bottom:4px; }
@@ -125,17 +125,15 @@
   </style>
 </head>
 <body>
-
   <nav>
     <div class="nav-logo"><h1>CYPEK</h1><div class="sub">lecimyszacunek.pl</div></div>
     <div class="nav-links">
-      <a href="home.html" class="nav-link"><span class="icon">◈</span> Główna</a>
-      <a href="index.html" class="nav-link active"><span class="icon">⬡</span> Panel BLE</a>
-      <a href="page3.html" class="nav-link"><span class="icon">◇</span> Strona 3</a>
+      <a href="/home"  class="nav-link"><span class="icon">◈</span> Główna</a>
+      <a href="/"      class="nav-link active"><span class="icon">⬡</span> Panel BLE</a>
+      <a href="/page3" class="nav-link"><span class="icon">◇</span> Strona 3</a>
     </div>
     <div class="nav-footer">v1.0 &nbsp;·&nbsp; KG200 &nbsp;·&nbsp; 2026</div>
   </nav>
-
   <main>
     <div class="shell">
       <div class="shell-inner">
@@ -143,10 +141,9 @@
           <h1>CYPEKTAURUS KG200</h1>
           <div class="sub">BLE CONTROL PANEL</div>
         </div>
-        <div class="no-bt-warning" id="noBtWarning">⚠ Twoja przeglądarka nie obsługuje Web Bluetooth.<br>Na iPhone użyj aplikacji <strong>Bluefy</strong>.<br>Na Androidzie / PC użyj Chrome.</div>
+        <div class="no-bt-warning" id="noBtWarning">⚠ Twoja przeglądarka nie obsługuje Web Bluetooth.<br>Na iPhone użyj <strong>Bluefy</strong>. Na Androidzie / PC użyj Chrome.</div>
         <div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Rozłączono</span></div>
         <button class="btn-connect" id="connectBtn" onclick="connectBLE()">▶ POŁĄCZ Z CYPEK-BT</button>
-
         <div class="ble-section" id="licznikSection">
           <div class="section-label">// licznik</div>
           <div class="licznik-display"><div class="lval" id="licznikDisplay">—</div><div class="lunit">PUNKTY</div></div>
@@ -170,9 +167,7 @@
           <div class="l-reset-row"><button class="l-btn-reset" onclick="cmdLicznik('=',0)">⟳ RESET DO ZERA</button></div>
           <div class="l-feedback" id="lFeedback"></div>
         </div>
-
         <hr class="sep">
-
         <div class="ble-section" id="watySection">
           <div class="section-label">// moc</div>
           <div class="waty-display"><div class="value" id="watyDisplay">15</div><div class="unit">WATÓW</div></div>
@@ -187,7 +182,6 @@
       </div>
     </div>
   </main>
-
   <script>
     const SERVICE_UUID="12345678-1234-1234-1234-123456789012",CHAR_WATY_UUID="87654321-4321-4321-4321-210987654321",CHAR_LICZNIK_UUID="11223344-1122-1122-1122-112233445566";
     const QUICK_VALUES=[10,20,40,60,80,100,130,160,200];
