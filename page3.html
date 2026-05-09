@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--
+  ╔══════════════════════════════════════════════╗
+  ║  STRONA 3 — DO EDYCJI                        ║
+  ║  1. Zmień <title> poniżej                    ║
+  ║  2. Zmień nazwę w nav-link w KAŻDYM pliku    ║
+  ║     (szukaj: "Strona 3")                     ║
+  ║  3. Wpisz własną treść w sekcji <main>       ║
+  ╚══════════════════════════════════════════════╝
+  -->
+  <title>STRONA 3 — lecimyszacunek.pl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a; --panel: #111; --border: #1e1e1e;
+      --accent: #00ff88; --accent2: #ff3c3c; --accent3: #3cf;
+      --text: #e0e0e0; --dim: #444; --dim2: #2a2a2a;
+      --nav-w: 220px;
+      --font-mono: 'Share Tech Mono', monospace;
+      --font-display: 'Bebas Neue', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--font-mono);
+      display: flex; min-height: 100vh;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, #111 39px, #111 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, #111 39px, #111 40px);
+    }
+    nav { width:var(--nav-w); min-height:100vh; background:#0d0d0d; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:36px 0 24px; position:fixed; top:0; left:0; bottom:0; z-index:100; }
+    .nav-logo { padding:0 24px 32px; border-bottom:1px solid var(--border); }
+    .nav-logo h1 { font-family:var(--font-display); font-size:1.6rem; letter-spacing:4px; color:var(--accent); line-height:1; text-shadow:0 0 16px rgba(0,255,136,0.3); }
+    .nav-logo .sub { font-size:9px; color:var(--dim); letter-spacing:3px; margin-top:5px; text-transform:uppercase; }
+    .nav-links { flex:1; padding:24px 0; display:flex; flex-direction:column; gap:2px; }
+    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 24px; color:var(--dim); text-decoration:none; font-size:11px; letter-spacing:3px; text-transform:uppercase; transition:all .15s; border-left:2px solid transparent; }
+    .nav-link .icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
+    .nav-link:hover { color:var(--text); background:rgba(255,255,255,0.03); border-left-color:var(--dim); }
+    .nav-link.active { color:var(--accent3); border-left-color:var(--accent3); background:rgba(51,204,255,0.04); }
+    .nav-footer { padding:16px 24px; border-top:1px solid var(--border); font-size:9px; color:var(--dim2); letter-spacing:2px; }
+    main { margin-left:var(--nav-w); flex:1; display:flex; align-items:center; justify-content:center; padding:60px 40px; min-height:100vh; }
+
+    /* ===== PLACEHOLDER ===== */
+    .placeholder {
+      max-width: 480px; width: 100%; text-align: center;
+    }
+    .placeholder-icon {
+      font-size: 3rem; margin-bottom: 24px;
+      color: var(--accent3);
+      text-shadow: 0 0 20px rgba(51,204,255,0.3);
+    }
+    .placeholder h2 {
+      font-family: var(--font-display);
+      font-size: 2.5rem; letter-spacing: 6px;
+      color: var(--accent3); margin-bottom: 8px;
+      text-shadow: 0 0 20px rgba(51,204,255,0.2);
+    }
+    .placeholder .sub {
+      font-size: 10px; color: var(--dim);
+      letter-spacing: 4px; text-transform: uppercase; margin-bottom: 36px;
+    }
+    .divider { display:flex; align-items:center; gap:16px; margin-bottom:28px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .divider span { font-size:9px; letter-spacing:3px; color:var(--dim); }
+
+    /* Instrukcja edycji */
+    .edit-steps {
+      text-align: left;
+      border: 1px solid var(--border);
+      background: #0d0d0d;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+    .edit-steps .step {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+      font-size: 11px; line-height: 1.6; color: #666;
+    }
+    .edit-steps .step:last-child { border-bottom: none; }
+    .edit-steps .step .n {
+      color: var(--accent3); font-size: 10px; letter-spacing: 2px;
+      flex-shrink: 0; padding-top: 1px;
+    }
+    .edit-steps .step code {
+      color: var(--accent); font-family: var(--font-mono);
+      font-size: 10px; background: rgba(0,255,136,0.06);
+      padding: 1px 4px;
+    }
+
+    /* Pole do wpisania nazwy (live preview) */
+    .name-preview {
+      border: 1px dashed var(--accent3);
+      padding: 16px;
+      margin-bottom: 0;
+    }
+    .name-preview label { font-size:9px; color:var(--dim); letter-spacing:3px; display:block; margin-bottom:8px; }
+    .name-input {
+      width:100%; background:transparent; border:none; border-bottom:1px solid var(--accent3);
+      color:var(--accent3); font-family:var(--font-display); font-size:1.4rem;
+      letter-spacing:4px; outline:none; text-align:center; padding:4px 0;
+    }
+    .name-input::placeholder { color:var(--dim); font-size:1rem; letter-spacing:3px; }
+
+    @media (max-width:640px) {
+      nav { width:100%; min-height:auto; position:relative; flex-direction:row; flex-wrap:wrap; padding:16px; border-right:none; border-bottom:1px solid var(--border); }
+      .nav-logo { padding:0 16px 0 0; border:none; }
+      .nav-links { flex-direction:row; padding:0; gap:0; }
+      .nav-link { padding:8px 12px; border-left:none; border-bottom:2px solid transparent; font-size:9px; }
+      .nav-link.active { border-left:none; border-bottom-color:var(--accent3); }
+      .nav-footer { display:none; }
+      main { margin-left:0; padding:30px 20px; }
+      body { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo"><h1>CYPEK</h1><div class="sub">lecimyszacunek.pl</div></div>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"><span class="icon">◈</span> Główna</a>
+      <a href="index.html" class="nav-link"><span class="icon">⬡</span> Panel BLE</a>
+      <!-- ZMIEŃ "Strona 3" na własną nazwę -->
+      <a href="page3.html" class="nav-link active"><span class="icon">◇</span> Strona 3</a>
+    </div>
+    <div class="nav-footer">v1.0 &nbsp;·&nbsp; KG200 &nbsp;·&nbsp; 2026</div>
+  </nav>
+
+  <main>
+    <div class="placeholder">
+      <div class="placeholder-icon">◇</div>
+
+      <!-- ZMIEŃ TEN TYTUŁ na własny -->
+      <h2 id="pageTitle">STRONA 3</h2>
+      <div class="sub">do edycji · lecimyszacunek.pl</div>
+
+      <div class="divider"><span>jak edytować</span></div>
+
+      <div class="edit-steps">
+        <div class="step">
+          <span class="n">01</span>
+          <span>Wpisz nazwę tej strony w polu poniżej — podgląd od razu w tytule powyżej.</span>
+        </div>
+        <div class="step">
+          <span class="n">02</span>
+          <span>W kodzie zmień <code>&lt;title&gt;</code> i tekst <code>h2#pageTitle</code> na wybraną nazwę.</span>
+        </div>
+        <div class="step">
+          <span class="n">03</span>
+          <span>W <code>home.html</code>, <code>index.html</code>, <code>panel.html</code> i tym pliku znajdź komentarz <code>&lt;!-- ZMIEŃ "Strona 3" --&gt;</code> i wpisz nową nazwę.</span>
+        </div>
+        <div class="step">
+          <span class="n">04</span>
+          <span>Skasuj tę sekcję <code>.edit-steps</code> i <code>.name-preview</code> — wstaw własną treść strony w sekcji <code>&lt;main&gt;</code>.</span>
+        </div>
+      </div>
+
+      <div class="name-preview">
+        <label>// podgląd nazwy strony</label>
+        <input class="name-input" id="nameInput" placeholder="wpisz nazwę..." maxlength="30"
+          oninput="document.getElementById('pageTitle').textContent = this.value || 'STRONA 3'">
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
