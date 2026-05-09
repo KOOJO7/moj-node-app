@@ -40,6 +40,10 @@ app.get('/panel', (req, res) => {
     }
 });
 
+app.get('/home.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'home.html'));
+});
+
 // 🚪 wylogowanie
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
