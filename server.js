@@ -14,6 +14,7 @@ if (!ADMIN_PASSWORD) {
 }
 
 app.use(express.json());
+app.use(express.static(__dirname));
 
 app.use(session({
     secret: 'jakis_dlugi_losowy_tekst_123',
