@@ -9,46 +9,42 @@
     :root {
       --bg: #0a0a0a; --panel: #111; --border: #1e1e1e;
       --accent: #00ff88; --accent2: #ff3c3c; --accent3: #3cf;
-      --text: #e0e0e0; --dim: #444;
+      --text: #e0e0e0; --dim: #444; --dim2: #2a2a2a;
+      --nav-w: 220px;
       --font-mono: 'Share Tech Mono', monospace;
       --font-display: 'Bebas Neue', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
       background: var(--bg); color: var(--text); font-family: var(--font-mono);
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 20px;
+      display: flex; min-height: 100vh;
       background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 39px, #1a1a1a 39px, #1a1a1a 40px),
-        repeating-linear-gradient(90deg, transparent, transparent 39px, #1a1a1a 39px, #1a1a1a 40px);
+        repeating-linear-gradient(0deg, transparent, transparent 39px, #111 39px, #111 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, #111 39px, #111 40px);
     }
-    .shell {
-      width: 100%; max-width: 420px;
-      border: 1px solid var(--border); background: var(--panel);
-      padding: 30px 24px 24px; position: relative;
-    }
-    .shell::before,.shell::after,.shell-inner::before,.shell-inner::after {
-      content:''; position:absolute; width:12px; height:12px;
-      border-color:var(--accent); border-style:solid;
-    }
+    nav { width:var(--nav-w); min-height:100vh; background:#0d0d0d; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:36px 0 24px; position:fixed; top:0; left:0; bottom:0; z-index:100; }
+    .nav-logo { padding:0 24px 32px; border-bottom:1px solid var(--border); }
+    .nav-logo h1 { font-family:var(--font-display); font-size:1.6rem; letter-spacing:4px; color:var(--accent); line-height:1; text-shadow:0 0 16px rgba(0,255,136,0.3); }
+    .nav-logo .sub { font-size:9px; color:var(--dim); letter-spacing:3px; margin-top:5px; text-transform:uppercase; }
+    .nav-links { flex:1; padding:24px 0; display:flex; flex-direction:column; gap:2px; }
+    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 24px; color:var(--dim); text-decoration:none; font-size:11px; letter-spacing:3px; text-transform:uppercase; transition:all .15s; border-left:2px solid transparent; }
+    .nav-link .icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
+    .nav-link:hover { color:var(--text); background:rgba(255,255,255,0.03); border-left-color:var(--dim); }
+    .nav-link.active { color:var(--accent); border-left-color:var(--accent); background:rgba(0,255,136,0.04); }
+    .nav-footer { padding:16px 24px; border-top:1px solid var(--border); font-size:9px; color:var(--dim2); letter-spacing:2px; }
+    main { margin-left:var(--nav-w); flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; min-height:100vh; }
+    .shell { width:100%; max-width:420px; border:1px solid var(--border); background:var(--panel); padding:30px 24px 24px; position:relative; }
+    .shell::before,.shell::after,.shell-inner::before,.shell-inner::after { content:''; position:absolute; width:12px; height:12px; border-color:var(--accent); border-style:solid; }
     .shell::before  { top:-1px;  left:-1px;  border-width:2px 0 0 2px; }
     .shell::after   { top:-1px;  right:-1px; border-width:2px 2px 0 0; }
     .shell-inner { position:relative; }
     .shell-inner::before { bottom:-25px; left:-1px;  border-width:0 0 2px 2px; }
     .shell-inner::after  { bottom:-25px; right:-1px; border-width:0 2px 2px 0; }
-
     .header { text-align:center; margin-bottom:24px; }
-    .header h1 {
-      font-family:var(--font-display); font-size:3rem; letter-spacing:4px;
-      color:var(--accent); line-height:1; text-shadow:0 0 20px rgba(0,255,136,0.4);
-    }
+    .header h1 { font-family:var(--font-display); font-size:2.4rem; letter-spacing:4px; color:var(--accent); line-height:1; text-shadow:0 0 20px rgba(0,255,136,0.4); }
     .header .sub { font-size:11px; color:var(--dim); letter-spacing:3px; text-transform:uppercase; margin-top:4px; }
-
-    .status-bar {
-      display:flex; align-items:center; gap:10px; padding:10px 14px;
-      border:1px solid var(--border); background:#0d0d0d;
-      margin-bottom:24px; font-size:12px; letter-spacing:1px;
-    }
+    .status-bar { display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--border); background:#0d0d0d; margin-bottom:24px; font-size:12px; letter-spacing:1px; }
     .status-dot { width:8px; height:8px; border-radius:50%; background:var(--dim); flex-shrink:0; transition:background .3s,box-shadow .3s; }
     .status-dot.connected  { background:var(--accent);  box-shadow:0 0 8px var(--accent);  animation:pulse 2s infinite; }
     .status-dot.error      { background:var(--accent2); box-shadow:0 0 8px var(--accent2); }
@@ -56,411 +52,158 @@
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
     @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
     #statusText { color:var(--text); flex:1; }
-
-    .btn-connect {
-      width:100%; padding:14px; background:transparent;
-      border:1px solid var(--accent3); color:var(--accent3);
-      font-family:var(--font-mono); font-size:13px; letter-spacing:3px;
-      text-transform:uppercase; cursor:pointer; transition:all .2s;
-      margin-bottom:28px; position:relative; overflow:hidden;
-    }
+    .btn-connect { width:100%; padding:14px; background:transparent; border:1px solid var(--accent3); color:var(--accent3); font-family:var(--font-mono); font-size:13px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all .2s; margin-bottom:28px; position:relative; overflow:hidden; }
     .btn-connect::before { content:''; position:absolute; inset:0; background:var(--accent3); opacity:0; transition:opacity .2s; }
     .btn-connect:hover::before { opacity:.08; }
     .btn-connect:active { transform:scale(.99); }
     .btn-connect:disabled { border-color:var(--dim); color:var(--dim); cursor:not-allowed; }
-
     .ble-section { opacity:.3; pointer-events:none; transition:opacity .4s; }
     .ble-section.active { opacity:1; pointer-events:all; }
-
     .section-label { font-size:10px; letter-spacing:4px; color:var(--dim); text-transform:uppercase; margin-bottom:16px; }
     .sep { border:none; border-top:1px solid var(--border); margin:28px 0; }
-
-    /* ===== LICZNIK ===== */
     .licznik-display { text-align:center; margin-bottom:20px; }
-    .lval {
-      font-family:var(--font-display); font-size:5rem; color:var(--accent3);
-      line-height:1; text-shadow:0 0 30px rgba(51,204,255,0.3);
-      transition:color .15s, text-shadow .15s;
-    }
-    .lval.flash-up    { color:#fff;         text-shadow:0 0 40px rgba(0,255,136,0.9); }
+    .lval { font-family:var(--font-display); font-size:5rem; color:var(--accent3); line-height:1; text-shadow:0 0 30px rgba(51,204,255,0.3); transition:color .15s,text-shadow .15s; }
+    .lval.flash-up    { color:#fff;          text-shadow:0 0 40px rgba(0,255,136,0.9); }
     .lval.flash-down  { color:var(--accent2); text-shadow:0 0 40px rgba(255,60,60,0.9); }
-    .lval.flash-reset { color:#ffaa00;      text-shadow:0 0 40px rgba(255,170,0,0.9); }
+    .lval.flash-reset { color:#ffaa00;       text-shadow:0 0 40px rgba(255,170,0,0.9); }
     .lunit { font-size:11px; color:var(--dim); letter-spacing:4px; margin-top:4px; }
-
-    /* Siatka przycisków +/- */
-    .l-grid {
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:6px;
-      margin-bottom:12px;
-    }
-    .l-col-label {
-      font-size:9px; letter-spacing:3px; color:var(--dim);
-      text-align:center; margin-bottom:4px;
-    }
+    .l-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
+    .l-col-label { font-size:9px; letter-spacing:3px; color:var(--dim); text-align:center; margin-bottom:4px; }
     .l-col { display:flex; flex-direction:column; gap:6px; }
-    .l-btn {
-      padding:10px 6px; border:1px solid var(--border); background:transparent;
-      font-family:var(--font-mono); font-size:13px; cursor:pointer;
-      transition:all .15s; text-align:center; letter-spacing:1px;
-    }
+    .l-btn { padding:10px 6px; border:1px solid var(--border); background:transparent; font-family:var(--font-mono); font-size:13px; cursor:pointer; transition:all .15s; text-align:center; letter-spacing:1px; }
     .l-btn.plus  { color:var(--accent);  border-color:rgba(0,255,136,.35); }
     .l-btn.minus { color:var(--accent2); border-color:rgba(255,60,60,.35); }
     .l-btn.plus:hover  { background:rgba(0,255,136,.1); border-color:var(--accent); }
     .l-btn.minus:hover { background:rgba(255,60,60,.1); border-color:var(--accent2); }
     .l-btn:active { transform:scale(.97); }
-
-    /* Ręczne wpisywanie */
-    .manual-row {
-      display:grid; grid-template-columns:1fr auto auto;
-      gap:6px; margin-bottom:10px; align-items:center;
-    }
-    .manual-input {
-      background:#000; border:1px solid var(--border); color:var(--accent3);
-      font-family:var(--font-mono); font-size:14px; padding:9px 10px;
-      outline:none; width:100%; text-align:center;
-    }
+    .manual-row { display:grid; grid-template-columns:1fr auto auto; gap:6px; margin-bottom:10px; align-items:center; }
+    .manual-input { background:#000; border:1px solid var(--border); color:var(--accent3); font-family:var(--font-mono); font-size:14px; padding:9px 10px; outline:none; width:100%; text-align:center; }
     .manual-input:focus { border-color:var(--accent3); }
-    .m-btn {
-      padding:9px 12px; border:none; font-family:var(--font-mono);
-      font-size:12px; cursor:pointer; letter-spacing:1px; transition:all .15s;
-    }
+    .m-btn { padding:9px 12px; border:none; font-family:var(--font-mono); font-size:12px; cursor:pointer; letter-spacing:1px; transition:all .15s; }
     .m-btn.add { background:var(--accent);  color:#000; }
     .m-btn.sub { background:var(--accent2); color:#fff; }
     .m-btn:hover { filter:brightness(1.15); }
     .m-btn:active { transform:scale(.97); }
-
-    /* Reset + feedback */
     .l-reset-row { display:flex; gap:6px; margin-bottom:6px; }
-    .l-btn-reset {
-      flex:1; padding:10px; background:transparent; border:1px solid rgba(255,170,0,.35);
-      color:#ffaa00; font-family:var(--font-mono); font-size:11px;
-      letter-spacing:3px; cursor:pointer; transition:all .15s;
-    }
+    .l-btn-reset { flex:1; padding:10px; background:transparent; border:1px solid rgba(255,170,0,.35); color:#ffaa00; font-family:var(--font-mono); font-size:11px; letter-spacing:3px; cursor:pointer; transition:all .15s; }
     .l-btn-reset:hover { background:rgba(255,170,0,.08); border-color:#ffaa00; }
     .l-btn-reset:active { transform:scale(.98); }
-
-    .l-feedback {
-      text-align:center; font-size:11px; letter-spacing:2px;
-      height:16px; color:transparent; transition:color .2s; margin-bottom:4px;
-    }
-    .l-feedback.ok   { color:var(--accent); }
-    .l-feedback.err  { color:var(--accent2); }
-    .l-feedback.warn { color:#ffaa00; }
-
-    /* ===== WATY ===== */
+    .l-feedback { text-align:center; font-size:11px; letter-spacing:2px; height:16px; color:transparent; transition:color .2s; margin-bottom:4px; }
+    .l-feedback.ok  { color:var(--accent); }
+    .l-feedback.err { color:var(--accent2); }
     .waty-display { text-align:center; margin-bottom:20px; }
-    .waty-display .value {
-      font-family:var(--font-display); font-size:5rem; color:var(--accent);
-      line-height:1; text-shadow:0 0 30px rgba(0,255,136,0.3); transition:color .2s;
-    }
+    .waty-display .value { font-family:var(--font-display); font-size:5rem; color:var(--accent); line-height:1; text-shadow:0 0 30px rgba(0,255,136,0.3); transition:color .2s; }
     .waty-display .value.changed { color:#fff; text-shadow:0 0 30px rgba(255,255,255,.5); }
     .waty-display .unit { font-size:14px; color:var(--dim); letter-spacing:3px; margin-top:4px; }
-
     .slider-wrap { margin-bottom:20px; }
     input[type=range] { -webkit-appearance:none; width:100%; height:2px; background:var(--border); outline:none; cursor:pointer; }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance:none; width:18px; height:18px;
-      background:var(--accent); border-radius:0; cursor:pointer;
-      box-shadow:0 0 10px rgba(0,255,136,.5); transition:transform .1s;
-    }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; background:var(--accent); border-radius:0; cursor:pointer; box-shadow:0 0 10px rgba(0,255,136,.5); transition:transform .1s; }
     input[type=range]::-webkit-slider-thumb:active { transform:scale(1.3); }
     .slider-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); margin-top:8px; }
-
     .quick-btns { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:20px; }
-    .q-btn {
-      padding:8px 4px; background:transparent; border:1px solid var(--border);
-      color:var(--dim); font-family:var(--font-mono); font-size:11px;
-      cursor:pointer; transition:all .15s; text-align:center;
-    }
+    .q-btn { padding:8px 4px; background:transparent; border:1px solid var(--border); color:var(--dim); font-family:var(--font-mono); font-size:11px; cursor:pointer; transition:all .15s; text-align:center; }
     .q-btn:hover { border-color:var(--accent); color:var(--accent); }
     .q-btn.active { background:var(--accent); color:#000; border-color:var(--accent); font-weight:bold; }
-
-    .btn-send {
-      width:100%; padding:16px; background:var(--accent); border:none; color:#000;
-      font-family:var(--font-mono); font-size:14px; font-weight:bold;
-      letter-spacing:4px; text-transform:uppercase; cursor:pointer; transition:all .2s;
-    }
+    .btn-send { width:100%; padding:16px; background:var(--accent); border:none; color:#000; font-family:var(--font-mono); font-size:14px; font-weight:bold; letter-spacing:4px; text-transform:uppercase; cursor:pointer; transition:all .2s; }
     .btn-send:hover { background:#00ffaa; }
     .btn-send:active { transform:scale(.99); }
     .btn-send:disabled { background:var(--dim); color:#000; cursor:not-allowed; }
-
     .send-feedback { text-align:center; font-size:11px; letter-spacing:2px; height:18px; margin-top:10px; color:transparent; transition:color .3s; }
     .send-feedback.ok  { color:var(--accent); }
     .send-feedback.err { color:var(--accent2); }
-
-    .footer { text-align:center; margin-top:28px; font-size:10px; color:#2a2a2a; letter-spacing:3px; }
     .no-bt-warning { display:none; padding:14px; border:1px solid var(--accent2); color:var(--accent2); font-size:12px; line-height:1.6; text-align:center; margin-bottom:20px; }
+    @media (max-width:640px) {
+      nav { width:100%; min-height:auto; position:relative; flex-direction:row; flex-wrap:wrap; padding:16px; border-right:none; border-bottom:1px solid var(--border); }
+      .nav-logo { padding:0 16px 0 0; border:none; }
+      .nav-links { flex-direction:row; padding:0; gap:0; }
+      .nav-link { padding:8px 12px; border-left:none; border-bottom:2px solid transparent; font-size:9px; }
+      .nav-link.active { border-left:none; border-bottom-color:var(--accent); }
+      .nav-footer { display:none; }
+      main { margin-left:0; padding:30px 16px; }
+      body { flex-direction:column; }
+    }
   </style>
 </head>
 <body>
 
-<div class="shell">
-  <div class="shell-inner">
-
-    <div class="header">
-      <h1>CYPEKTAURUS KG200</h1>
-      <div class="sub">lecimyszacunek.pl — BLE CONTROL</div>
+  <nav>
+    <div class="nav-logo"><h1>CYPEK</h1><div class="sub">lecimyszacunek.pl</div></div>
+    <div class="nav-links">
+      <a href="home.html" class="nav-link"><span class="icon">◈</span> Główna</a>
+      <a href="index.html" class="nav-link active"><span class="icon">⬡</span> Panel BLE</a>
+      <a href="page3.html" class="nav-link"><span class="icon">◇</span> Strona 3</a>
     </div>
+    <div class="nav-footer">v1.0 &nbsp;·&nbsp; KG200 &nbsp;·&nbsp; 2026</div>
+  </nav>
 
-    <div class="no-bt-warning" id="noBtWarning">
-      ⚠ Twoja przeglądarka nie obsługuje Web Bluetooth.<br>
-      Na iPhone użyj aplikacji <strong>Bluefy</strong>.<br>
-      Na Androidzie / PC użyj Chrome.
-    </div>
+  <main>
+    <div class="shell">
+      <div class="shell-inner">
+        <div class="header">
+          <h1>CYPEKTAURUS KG200</h1>
+          <div class="sub">BLE CONTROL PANEL</div>
+        </div>
+        <div class="no-bt-warning" id="noBtWarning">⚠ Twoja przeglądarka nie obsługuje Web Bluetooth.<br>Na iPhone użyj aplikacji <strong>Bluefy</strong>.<br>Na Androidzie / PC użyj Chrome.</div>
+        <div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Rozłączono</span></div>
+        <button class="btn-connect" id="connectBtn" onclick="connectBLE()">▶ POŁĄCZ Z CYPEK-BT</button>
 
-    <div class="status-bar">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Rozłączono</span>
-    </div>
-
-    <button class="btn-connect" id="connectBtn" onclick="connectBLE()">
-      ▶ POŁĄCZ Z CYPEK-BT
-    </button>
-
-    <!-- ===== LICZNIK ===== -->
-    <div class="ble-section" id="licznikSection">
-      <div class="section-label">// licznik</div>
-
-      <div class="licznik-display">
-        <div class="lval" id="licznikDisplay">—</div>
-        <div class="lunit">PUNKTY</div>
-      </div>
-
-      <!-- +1 / +10 / +100  vs  -1 / -10 / -100 -->
-      <div class="l-grid">
-        <div>
-          <div class="l-col-label">DODAJ</div>
-          <div class="l-col">
-            <button class="l-btn plus" onclick="cmdLicznik('+', 1)">  + 1</button>
-            <button class="l-btn plus" onclick="cmdLicznik('+', 10)"> +10</button>
-            <button class="l-btn plus" onclick="cmdLicznik('+', 100)">+100</button>
+        <div class="ble-section" id="licznikSection">
+          <div class="section-label">// licznik</div>
+          <div class="licznik-display"><div class="lval" id="licznikDisplay">—</div><div class="lunit">PUNKTY</div></div>
+          <div class="l-grid">
+            <div><div class="l-col-label">DODAJ</div><div class="l-col">
+              <button class="l-btn plus"  onclick="cmdLicznik('+',1)">  + 1</button>
+              <button class="l-btn plus"  onclick="cmdLicznik('+',10)"> +10</button>
+              <button class="l-btn plus"  onclick="cmdLicznik('+',100)">+100</button>
+            </div></div>
+            <div><div class="l-col-label">ODEJMIJ</div><div class="l-col">
+              <button class="l-btn minus" onclick="cmdLicznik('-',1)">  − 1</button>
+              <button class="l-btn minus" onclick="cmdLicznik('-',10)"> −10</button>
+              <button class="l-btn minus" onclick="cmdLicznik('-',100)">−100</button>
+            </div></div>
           </div>
-        </div>
-        <div>
-          <div class="l-col-label">ODEJMIJ</div>
-          <div class="l-col">
-            <button class="l-btn minus" onclick="cmdLicznik('-', 1)">  − 1</button>
-            <button class="l-btn minus" onclick="cmdLicznik('-', 10)"> −10</button>
-            <button class="l-btn minus" onclick="cmdLicznik('-', 100)">−100</button>
+          <div class="manual-row">
+            <input class="manual-input" type="number" id="manualVal" placeholder="wpisz..." min="-99999" max="99999">
+            <button class="m-btn add" onclick="manualCmd('+')">DODAJ</button>
+            <button class="m-btn sub" onclick="manualCmd('-')">ODEJMIJ</button>
           </div>
+          <div class="l-reset-row"><button class="l-btn-reset" onclick="cmdLicznik('=',0)">⟳ RESET DO ZERA</button></div>
+          <div class="l-feedback" id="lFeedback"></div>
+        </div>
+
+        <hr class="sep">
+
+        <div class="ble-section" id="watySection">
+          <div class="section-label">// moc</div>
+          <div class="waty-display"><div class="value" id="watyDisplay">15</div><div class="unit">WATÓW</div></div>
+          <div class="slider-wrap">
+            <input type="range" id="watySlider" min="5" max="200" step="5" value="15" oninput="onSliderInput(this.value)">
+            <div class="slider-labels"><span>5W</span><span>50W</span><span>100W</span><span>150W</span><span>200W</span></div>
+          </div>
+          <div class="quick-btns" id="quickBtns"></div>
+          <button class="btn-send" id="sendBtn" onclick="sendWaty()">↑ WYŚLIJ DO ESP32</button>
+          <div class="send-feedback" id="sendFeedback"></div>
         </div>
       </div>
-
-      <!-- Ręczne wpisanie wartości -->
-      <div class="manual-row">
-        <input class="manual-input" type="number" id="manualVal" placeholder="wpisz..." min="-99999" max="99999">
-        <button class="m-btn add" onclick="manualCmd('+')">DODAJ</button>
-        <button class="m-btn sub" onclick="manualCmd('-')">ODEJMIJ</button>
-      </div>
-
-      <!-- Reset -->
-      <div class="l-reset-row">
-        <button class="l-btn-reset" onclick="cmdLicznik('=', 0)">⟳ RESET DO ZERA</button>
-      </div>
-      <div class="l-feedback" id="lFeedback"></div>
     </div>
+  </main>
 
-    <hr class="sep">
-
-    <!-- ===== WATY ===== -->
-    <div class="ble-section" id="watySection">
-      <div class="section-label">// moc</div>
-
-      <div class="waty-display">
-        <div class="value" id="watyDisplay">15</div>
-        <div class="unit">WATÓW</div>
-      </div>
-
-      <div class="slider-wrap">
-        <input type="range" id="watySlider" min="5" max="200" step="5" value="15"
-          oninput="onSliderInput(this.value)">
-        <div class="slider-labels">
-          <span>5W</span><span>50W</span><span>100W</span><span>150W</span><span>200W</span>
-        </div>
-      </div>
-
-      <div class="quick-btns" id="quickBtns"></div>
-
-      <button class="btn-send" id="sendBtn" onclick="sendWaty()">↑ WYŚLIJ DO ESP32</button>
-      <div class="send-feedback" id="sendFeedback"></div>
-    </div>
-
-  </div>
-</div>
-
-<div class="footer">CYPEKTAURUS KG200 &copy; 2026</div>
-
-<script>
-  // ======== UUID — IDENTYCZNE JAK W ARDUINO ========
-  const SERVICE_UUID      = "12345678-1234-1234-1234-123456789012";
-  const CHAR_WATY_UUID    = "87654321-4321-4321-4321-210987654321";
-  const CHAR_LICZNIK_UUID = "11223344-1122-1122-1122-112233445566";
-  // =================================================
-
-  const QUICK_VALUES = [10, 20, 40, 60, 80, 100, 130, 160, 200];
-
-  let bleDevice   = null;
-  let charWaty    = null;
-  let charLicznik = null;
-  let currentWaty = 15;
-
-  if (!navigator.bluetooth) {
-    document.getElementById('noBtWarning').style.display = 'block';
-    document.getElementById('connectBtn').disabled = true;
-  }
-
-  // Przyciski szybkiego wyboru watów
-  const quickWrap = document.getElementById('quickBtns');
-  QUICK_VALUES.forEach(w => {
-    const b = document.createElement('button');
-    b.className = 'q-btn'; b.textContent = w + 'W'; b.dataset.val = w;
-    b.onclick = () => setWaty(w);
-    quickWrap.appendChild(b);
-  });
-
-  // -------- STATUS --------
-  function setStatus(text, state) {
-    document.getElementById('statusText').textContent = text;
-    const dot = document.getElementById('statusDot');
-    dot.className = 'status-dot';
-    if (state === 'connected')   dot.classList.add('connected');
-    else if (state === 'error')  dot.classList.add('error');
-    else if (state === 'connecting') dot.classList.add('connecting');
-  }
-
-  // -------- WATY --------
-  function setWaty(val) {
-    currentWaty = val;
-    document.getElementById('watyDisplay').textContent = val;
-    document.getElementById('watySlider').value = val;
-    document.querySelectorAll('.q-btn').forEach(b =>
-      b.classList.toggle('active', parseInt(b.dataset.val) === val)
-    );
-    const d = document.getElementById('watyDisplay');
-    d.classList.add('changed');
-    setTimeout(() => d.classList.remove('changed'), 200);
-  }
-  function onSliderInput(val) { setWaty(parseInt(val)); }
-
-  // -------- LICZNIK --------
-  function flashLicznik(cls) {
-    const el = document.getElementById('licznikDisplay');
-    el.classList.add(cls);
-    setTimeout(() => el.classList.remove(cls), 300);
-  }
-  function lFeedback(msg, cls) {
-    const el = document.getElementById('lFeedback');
-    el.textContent = msg; el.className = 'l-feedback ' + cls;
-    setTimeout(() => { el.className = 'l-feedback'; }, 2000);
-  }
-
-  // op: '+' | '-' | '='    val: liczba
-  async function cmdLicznik(op, val) {
-    if (!charLicznik) return;
-    try {
-      const cmd = op + String(val);
-      await charLicznik.writeValue(new TextEncoder().encode(cmd));
-
-      // Odczytaj zaktualizowaną wartość
-      const raw = await charLicznik.readValue();
-      const newVal = parseInt(new TextDecoder().decode(raw));
-      if (!isNaN(newVal)) {
-        document.getElementById('licznikDisplay').textContent = newVal;
-        if (op === '+') flashLicznik('flash-up');
-        else if (op === '-') flashLicznik('flash-down');
-        else flashLicznik('flash-reset');
-        lFeedback(op === '=' ? '✓ RESET' : `✓ ${op}${val}`, 'ok');
-      }
-    } catch(err) {
-      lFeedback('✗ BŁĄD: ' + err.message, 'err');
-      console.error(err);
-    }
-  }
-
-  function manualCmd(op) {
-    const input = document.getElementById('manualVal');
-    const val = parseInt(input.value);
-    if (isNaN(val) || val <= 0) {
-      lFeedback('✗ PODAJ LICZBĘ > 0', 'err'); return;
-    }
-    cmdLicznik(op, val);
-    input.value = '';
-  }
-
-  // -------- CONNECT --------
-  async function connectBLE() {
-    const btn = document.getElementById('connectBtn');
-    if (bleDevice && bleDevice.gatt.connected) { bleDevice.gatt.disconnect(); return; }
-
-    try {
-      btn.disabled = true;
-      setStatus('Skanowanie...', 'connecting');
-
-      bleDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ name: 'CYPEK-BT' }],
-        optionalServices: [SERVICE_UUID]
-      });
-
-      setStatus('Łączenie...', 'connecting');
-      const server  = await bleDevice.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE_UUID);
-
-      // Obie charakterystyki
-      charWaty    = await service.getCharacteristic(CHAR_WATY_UUID);
-      charLicznik = await service.getCharacteristic(CHAR_LICZNIK_UUID);
-
-      // Odczytaj aktualne wartości
-      const watyRaw = await charWaty.readValue();
-      const watyESP = parseInt(new TextDecoder().decode(watyRaw));
-      if (!isNaN(watyESP)) setWaty(watyESP);
-
-      const lRaw = await charLicznik.readValue();
-      const lESP = parseInt(new TextDecoder().decode(lRaw));
-      document.getElementById('licznikDisplay').textContent = isNaN(lESP) ? 0 : lESP;
-
-      setStatus('Połączono: ' + bleDevice.name, 'connected');
-      btn.textContent = '■ ROZŁĄCZ';
-      btn.disabled = false;
-      document.getElementById('watySection').classList.add('active');
-      document.getElementById('licznikSection').classList.add('active');
-
-      bleDevice.addEventListener('gattserverdisconnected', () => {
-        setStatus('Rozłączono', 'idle');
-        btn.textContent = '▶ POŁĄCZ Z CYPEK-BT';
-        btn.disabled = false;
-        document.getElementById('watySection').classList.remove('active');
-        document.getElementById('licznikSection').classList.remove('active');
-        charWaty = null; charLicznik = null;
-      });
-
-    } catch(err) {
-      const msg = err.message || '';
-      setStatus(msg.includes('cancel') || msg.includes('chooser') ? 'Anulowano' : 'Błąd: ' + msg, 'error');
-      btn.disabled = false;
-      btn.textContent = '▶ POŁĄCZ Z CYPEK-BT';
-      console.error(err);
-    }
-  }
-
-  // -------- WYŚLIJ WATY --------
-  async function sendWaty() {
-    if (!charWaty) return;
-    const fb = document.getElementById('sendFeedback');
-    const btn = document.getElementById('sendBtn');
-    try {
-      btn.disabled = true;
-      await charWaty.writeValue(new TextEncoder().encode(String(currentWaty)));
-      fb.textContent = '✓ WYSŁANO ' + currentWaty + 'W';
-      fb.className = 'send-feedback ok';
-    } catch(err) {
-      fb.textContent = '✗ BŁĄD WYSYŁANIA';
-      fb.className = 'send-feedback err';
-    } finally {
-      btn.disabled = false;
-      setTimeout(() => { fb.className = 'send-feedback'; }, 2500);
-    }
-  }
-</script>
+  <script>
+    const SERVICE_UUID="12345678-1234-1234-1234-123456789012",CHAR_WATY_UUID="87654321-4321-4321-4321-210987654321",CHAR_LICZNIK_UUID="11223344-1122-1122-1122-112233445566";
+    const QUICK_VALUES=[10,20,40,60,80,100,130,160,200];
+    let bleDevice=null,charWaty=null,charLicznik=null,currentWaty=15;
+    if(!navigator.bluetooth){document.getElementById('noBtWarning').style.display='block';document.getElementById('connectBtn').disabled=true;}
+    const quickWrap=document.getElementById('quickBtns');
+    QUICK_VALUES.forEach(w=>{const b=document.createElement('button');b.className='q-btn';b.textContent=w+'W';b.dataset.val=w;b.onclick=()=>setWaty(w);quickWrap.appendChild(b);});
+    function setStatus(t,s){document.getElementById('statusText').textContent=t;const d=document.getElementById('statusDot');d.className='status-dot';if(s==='connected')d.classList.add('connected');else if(s==='error')d.classList.add('error');else if(s==='connecting')d.classList.add('connecting');}
+    function setWaty(v){currentWaty=v;document.getElementById('watyDisplay').textContent=v;document.getElementById('watySlider').value=v;document.querySelectorAll('.q-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.val)===v));const d=document.getElementById('watyDisplay');d.classList.add('changed');setTimeout(()=>d.classList.remove('changed'),200);}
+    function onSliderInput(v){setWaty(parseInt(v));}
+    function flashLicznik(c){const e=document.getElementById('licznikDisplay');e.classList.add(c);setTimeout(()=>e.classList.remove(c),300);}
+    function lFeedback(m,c){const e=document.getElementById('lFeedback');e.textContent=m;e.className='l-feedback '+c;setTimeout(()=>{e.className='l-feedback';},2000);}
+    async function cmdLicznik(op,val){if(!charLicznik)return;try{await charLicznik.writeValue(new TextEncoder().encode(op+String(val)));const raw=await charLicznik.readValue();const nv=parseInt(new TextDecoder().decode(raw));if(!isNaN(nv)){document.getElementById('licznikDisplay').textContent=nv;if(op==='+')flashLicznik('flash-up');else if(op==='-')flashLicznik('flash-down');else flashLicznik('flash-reset');lFeedback(op==='='?'✓ RESET':`✓ ${op}${val}`,'ok');}}catch(e){lFeedback('✗ BŁĄD: '+e.message,'err');}}
+    function manualCmd(op){const i=document.getElementById('manualVal');const v=parseInt(i.value);if(isNaN(v)||v<=0){lFeedback('✗ PODAJ LICZBĘ > 0','err');return;}cmdLicznik(op,v);i.value='';}
+    async function connectBLE(){const btn=document.getElementById('connectBtn');if(bleDevice&&bleDevice.gatt.connected){bleDevice.gatt.disconnect();return;}try{btn.disabled=true;setStatus('Skanowanie...','connecting');bleDevice=await navigator.bluetooth.requestDevice({filters:[{name:'CYPEK-BT'}],optionalServices:[SERVICE_UUID]});setStatus('Łączenie...','connecting');const srv=await bleDevice.gatt.connect();const svc=await srv.getPrimaryService(SERVICE_UUID);charWaty=await svc.getCharacteristic(CHAR_WATY_UUID);charLicznik=await svc.getCharacteristic(CHAR_LICZNIK_UUID);const wr=await charWaty.readValue();const we=parseInt(new TextDecoder().decode(wr));if(!isNaN(we))setWaty(we);const lr=await charLicznik.readValue();const le=parseInt(new TextDecoder().decode(lr));document.getElementById('licznikDisplay').textContent=isNaN(le)?0:le;setStatus('Połączono: '+bleDevice.name,'connected');btn.textContent='■ ROZŁĄCZ';btn.disabled=false;document.getElementById('watySection').classList.add('active');document.getElementById('licznikSection').classList.add('active');bleDevice.addEventListener('gattserverdisconnected',()=>{setStatus('Rozłączono','idle');btn.textContent='▶ POŁĄCZ Z CYPEK-BT';btn.disabled=false;document.getElementById('watySection').classList.remove('active');document.getElementById('licznikSection').classList.remove('active');charWaty=null;charLicznik=null;});}catch(e){const m=e.message||'';setStatus(m.includes('cancel')||m.includes('chooser')?'Anulowano':'Błąd: '+m,'error');btn.disabled=false;btn.textContent='▶ POŁĄCZ Z CYPEK-BT';}}
+    async function sendWaty(){if(!charWaty)return;const fb=document.getElementById('sendFeedback'),btn=document.getElementById('sendBtn');try{btn.disabled=true;await charWaty.writeValue(new TextEncoder().encode(String(currentWaty)));fb.textContent='✓ WYSŁANO '+currentWaty+'W';fb.className='send-feedback ok';}catch(e){fb.textContent='✗ BŁĄD WYSYŁANIA';fb.className='send-feedback err';}finally{btn.disabled=false;setTimeout(()=>{fb.className='send-feedback';},2500);}}
+  </script>
 </body>
 </html>
