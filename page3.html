@@ -14,6 +14,17 @@
       --font-mono: 'Share Tech Mono', monospace;
       --font-display: 'Bebas Neue', sans-serif;
     }
+    @keyframes glow-pulse {
+      0% { color: var(--accent); text-shadow: 0 0 5px rgba(0,255,136,0.2); }
+      50% { color: #fff; text-shadow: 0 0 15px rgba(0,255,136,0.8), 0 0 25px rgba(0,255,136,0.4); }
+      100% { color: var(--accent); text-shadow: 0 0 5px rgba(0,255,136,0.2); }
+    }
+    
+    .status-active {
+      animation: glow-pulse 2s infinite ease-in-out;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; scroll-behavior: smooth; }
     body {
@@ -98,13 +109,13 @@
         <h2 id="pageTitle">CYPEKTAURUS KG200</h2>
         <div class="price">674.20 PLN</div>
         <p style="font-size: 11px; color: var(--dim); margin-bottom: 20px; line-height: 1.6;">
-          // STATUS: DOSTĘPNY<br>
-          // WYSYŁKA: NATYCHMIASTOWA<br>
+          // STATUS: <span class="status-active">DOSTĘPNY</span><br>
+          // WYSYŁKA: <span class="status-active">NATYCHMIASTOWA</span><br>
           // MODEL: KG200-CYBER-TECH
         </p>
         <button class="buy-btn">KUP TERAZ</button>
         <div class="sub" style="font-size: 9px; color: var(--dim); letter-spacing: 1px;">
-          Gwarancja do bramy, a potem się nie znamy.
+          Gwarancja do bramy, a potem się nie znamy.🤣🤣🤣🤣🤣🤣
         </div>
       </div>
     </div>
@@ -119,16 +130,23 @@
       <div class="tab-content">
         <!-- SEKCJA OPISU -->
         <div id="opis" class="tab-pane active">
-          <p style="line-height: 1.8;">TUTAJ WPISZ SWÓJ OPIS PRODUKTU. <br><br> Cypektaurus KG200 to nie jest zwykła maszyna. To manifestacja siły i technologii zapakowana w obudowę z hartowanej stali i marzeń. Jeśli szukasz czegoś, co zmieni Twoje życie o 360 stopni (czyli wrócisz do punktu wyjścia, ale z fajniejszym sprzętem), to jesteś w dobrym miejscu.</p>
+          <p style="line-height: 1.8;">Ale luźno lecimy. <br><br> Cypektaurus kg200 to maszyna dla
+          prawdziwych koneserów technologi. Jeśli jedyną osobą która na ciebie leci to 0,5T koleżanka z domu dziecka
+          to ten produkt jest idealny dla ciebie. Ten luźna torta jest wykonana z najwyższej ocenianych przez mazurskich
+          ekspertów materiałów oraz programowany on został przy wytężeniu wszystkich szarych komórek.</p>
         </div>
 
         <!-- SEKCJA DANYCH TECHNICZNYCH -->
         <div id="spec" class="tab-pane">
           <ul style="list-style: none; line-height: 2;">
-            <li><span style="color:var(--accent3)">[ PROCESOR ]</span> Quantum Cypek Core v4</li>
-            <li><span style="color:var(--accent3)">[ ZASILANIE ]</span> 230V / Łzy konkurencji</li>
+            <li><span style="color:var(--accent3)">[ PROCESOR ]</span> Quantum Cypek Quest 2.0</li>
+            <li><span style="color:var(--accent3)">[ ZASILANIE ]</span> wymienny akumulator 18650 30A</li>
             <li><span style="color:var(--accent3)">[ ŁĄCZNOŚĆ ]</span> Bluetooth Low Energy (BLE)</li>
-            <li><span style="color:var(--accent3)">[ WAGA ]</span> Ciężkie jak Twoje grzechy</li>
+            <li><span style="color:var(--accent3)">[ WAGA ]</span> lwk wszystkie torty sie przy tym chowają</li>
+            <li><span style="color:var(--accent3)">[ WYMIARY ]</span> 93 x 56.7 x 26mm</li>
+            <li><span style="color:var(--accent3)">[ MOC ]</span> 200W</li>
+            <li><span style="color:var(--accent3)">[ NAPIĘCIE ]</span> 3.3V-5V</li>
+            <li><span style="color:var(--accent3)">[ ŁADOWANIE ]</span> Port USB-C</li>
           </ul>
         </div>
 
@@ -136,13 +154,16 @@
         <div id="opinie" class="tab-pane">
           <div class="review">
             <div class="stars">★★★★★</div>
-            <p>"Najlepszy zakup w tym roku. Cypektaurus śmiga aż miło, a sąsiedzi patrzą z zazdrością."</p>
-            <small style="color:var(--dim)">— Anonimowy_Koneser</small>
+            <p>"Kupiłem kiedy byłem w stanie depresyjnym moje życie waliło sie pod nogami, mój pies został przejechany
+              przez dostawczak, moje króliki uciekły do lasu i w dodatku kolega obciął mi włosy na niskie zanikanie"</p>
+            <small style="color:var(--dim)">— Łopata</small>
           </div>
           <div class="review">
             <div class="stars" style="color: var(--accent2)">★☆☆☆☆</div>
-            <p>"Kupiłem i teraz moja stara na mnie krzyczy, że za drogie. Nie polecam zakupów pod wpływem emocji."</p>
-            <small style="color:var(--dim)">— Smutny_Mąż</small>
+            <p>"Kupiłem i kasia sie drze że przez to mam sprawe w sądzie a zeby kupic prawnika musiala sprzedac
+              mojego kota i kameLeona to bardzo przykre w dodatku dowiedzialem sie mój tata zdardza mame na tirach w 
+              Hamburgu pozdro lecimy lipowa szacunek"</p>
+            <small style="color:var(--dim)">— Biegun</small>
           </div>
         </div>
       </div>
