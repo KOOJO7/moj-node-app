@@ -32,6 +32,10 @@ app.get('/page3', (req, res) => {
     res.sendFile(path.join(__dirname, 'page3.html'));
 });
 
+app.get('/kontakt', (req, res) => {
+    res.sendFile(path.join(__dirname, 'kontakt.html'));
+});
+
 // ─── LOGOWANIE ───────────────────────────────────────────────
 app.post('/login', (req, res) => {
     if (req.body.pass === ADMIN_PASSWORD) {
