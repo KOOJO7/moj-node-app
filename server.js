@@ -32,15 +32,18 @@ app.post('/send-email', (req, res) => {
     const { name, email, reason, message } = req.body;
 
     const transporter = nodemailer.createTransport({
-        host: "serwer2682951.home.pl", // Sprawdź ten numer w panelu home!
+        host: "poczta.home.pl", // Zmień na ten adres, jeśli poprzedni nie działa
         port: 465,
         secure: true, 
         auth: {
             user: "kontakt@lecimyszacunek.pl",
-            pass: "11kojo11" // Twoje hasło z obrazka
+            pass: process.env.MAIL_PASS || "11kojo11" 
+        },
+        tls: {
+            // To pomaga, jeśli serwer home.pl ma problem z certyfikatem na zewnątrz
+            rejectUnauthorized: false 
         }
     });
-
     const mailOptions = {
         from: 'kontakt@lecimyszacunek.pl',
         to: 'TWÓJ_PRYWATNY_MAIL@gmail.com', // <--- WPISZ SWÓJ GMAIL
