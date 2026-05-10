@@ -6,88 +6,86 @@
   <title>KONTAKT — lecimyszacunek.pl</title>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #0a0a0a; --panel: #111; --border: #1e1e1e;
-      --accent: #00ff88; --accent2: #ff3c3c; --accent3: #3cf;
-      --text: #e0e0e0; --dim: #444; --dim2: #2a2a2a;
-      --nav-w: 220px;
-      --font-mono: 'Share Tech Mono', monospace;
-      --font-display: 'Bebas Neue', sans-serif;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg); color: var(--text); font-family: var(--font-mono);
-      display: flex; min-height: 100vh;
-      background-image: repeating-linear-gradient(0deg, transparent, transparent 39px, #111 39px, #111 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, #111 39px, #111 40px);
-    }
-    
-    /* NAV */
-    nav { width:var(--nav-w); min-height:100vh; background:#0d0d0d; border-right:1px solid var(--border); display:flex; flex-direction:column; padding:36px 0 24px; position:fixed; }
-    .nav-logo { padding:0 24px 32px; border-bottom:1px solid var(--border); }
-    .nav-logo h1 { font-family:var(--font-display); font-size:1.6rem; letter-spacing:4px; color:var(--accent); }
-    .nav-links { flex:1; padding:24px 0; display:flex; flex-direction:column; gap:2px; }
-    .nav-link { display:flex; align-items:center; gap:12px; padding:11px 24px; color:var(--dim); text-decoration:none; font-size:11px; letter-spacing:3px; text-transform:uppercase; transition:0.15s; border-left:2px solid transparent; }
-    .nav-link:hover { color:var(--text); background:rgba(255,255,255,0.03); }
-    .nav-link.active { color:var(--accent2); border-left-color:var(--accent2); background:rgba(255,60,60,0.04); }
-
-    main { margin-left:var(--nav-w); flex:1; padding:60px 40px; display: flex; justify-content: center; align-items: center; }
-
-    .contact-card { max-width: 600px; width: 100%; background: rgba(17,17,17,0.9); border: 1px solid var(--border); padding: 40px; position: relative; }
-    .contact-card::before { content: ''; position: absolute; top: -1px; left: -1px; width: 20px; height: 20px; border-top: 2px solid var(--accent2); border-left: 2px solid var(--accent2); }
-
-    h2 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent2); letter-spacing: 4px; margin-bottom: 30px; }
-    
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    
-    input, select, textarea {
-      width: 100%; background: #080808; border: 1px solid var(--border);
-      padding: 12px; color: #fff; font-family: var(--font-mono); font-size: 13px; outline: none;
-      transition: 0.3s;
-    }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent2); box-shadow: 0 0 10px rgba(255,60,60,0.1); }
-    
-    option { background: var(--panel); }
-
-    .submit-btn {
-      width: 100%; padding: 15px; background: transparent; border: 1px solid var(--accent2);
-      color: var(--accent2); font-family: var(--font-display); font-size: 1.2rem;
-      letter-spacing: 3px; cursor: pointer; transition: 0.3s; margin-top: 10px;
-    }
-    .submit-btn:hover { background: var(--accent2); color: #000; box-shadow: 0 0 20px rgba(255,60,60,0.4); }
-
-    @media (max-width:800px) {
-      nav { display: none; }
-      main { margin-left: 0; padding: 20px; }
+    :root{--bg:#0a0a0a;--panel:#111;--border:#1e1e1e;--accent:#00ff88;--accent2:#ff3c3c;--accent3:#3cf;--text:#e0e0e0;--dim:#444;--dim2:#2a2a2a;--nav-w:220px;--font-mono:'Share Tech Mono',monospace;--font-display:'Bebas Neue',sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-mono);display:flex;min-height:100vh;
+      background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,#111 39px,#111 40px),
+      repeating-linear-gradient(90deg,transparent,transparent 39px,#111 39px,#111 40px)}
+    nav{width:var(--nav-w);min-height:100vh;background:#0d0d0d;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:36px 0 24px;position:fixed;top:0;left:0;bottom:0;z-index:100}
+    .nav-logo{padding:0 24px 32px;border-bottom:1px solid var(--border)}
+    .nav-logo h1{font-family:var(--font-display);font-size:1.6rem;letter-spacing:4px;color:var(--accent)}
+    .nav-logo .sub{font-size:9px;color:var(--dim);letter-spacing:3px;margin-top:5px;text-transform:uppercase}
+    .nav-links{flex:1;padding:24px 0;display:flex;flex-direction:column;gap:2px}
+    .nav-link{display:flex;align-items:center;gap:12px;padding:11px 24px;color:var(--dim);text-decoration:none;font-size:11px;letter-spacing:3px;text-transform:uppercase;transition:.15s;border-left:2px solid transparent}
+    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.03)}
+    .nav-link.active{color:var(--accent2);border-left-color:var(--accent2);background:rgba(255,60,60,.04)}
+    .nav-footer{padding:16px 24px;border-top:1px solid var(--border);font-size:9px;color:var(--dim2);letter-spacing:2px}
+    .topbar{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#0d0d0d;border-bottom:1px solid var(--border);z-index:200;align-items:center;padding:0 20px;gap:16px}
+    .topbar-logo{font-family:var(--font-display);font-size:1.4rem;letter-spacing:4px;color:var(--accent);flex:1}
+    .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:8px;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+    .drawer{display:none;position:fixed;top:56px;left:0;right:0;background:#0d0d0d;border-bottom:1px solid var(--border);z-index:199;flex-direction:column;transform:translateY(-100%);transition:transform .25s ease;pointer-events:none}
+    .drawer.open{transform:translateY(0);pointer-events:all}
+    .drawer .nav-link{padding:16px 24px;font-size:12px;border-left:none;border-bottom:1px solid var(--border)}
+    .drawer .nav-link:last-child{border-bottom:none}
+    .drawer .nav-link.active{color:var(--accent2);background:rgba(255,60,60,.04)}
+    .drawer-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(0,0,0,.6);z-index:198}
+    main{margin-left:var(--nav-w);flex:1;padding:60px 40px;display:flex;justify-content:center;align-items:center}
+    .contact-card{max-width:600px;width:100%;background:rgba(17,17,17,.9);border:1px solid var(--border);padding:40px;position:relative}
+    .contact-card::before{content:'';position:absolute;top:-1px;left:-1px;width:20px;height:20px;border-top:2px solid var(--accent2);border-left:2px solid var(--accent2)}
+    h2{font-family:var(--font-display);font-size:2.5rem;color:var(--accent2);letter-spacing:4px;margin-bottom:30px}
+    .form-group{margin-bottom:20px}
+    label{display:block;font-size:9px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+    input,select,textarea{width:100%;background:#080808;border:1px solid var(--border);padding:12px;color:#fff;font-family:var(--font-mono);font-size:13px;outline:none;transition:.3s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 10px rgba(255,60,60,.1)}
+    option{background:var(--panel)}
+    .submit-btn{width:100%;padding:15px;background:transparent;border:1px solid var(--accent2);color:var(--accent2);font-family:var(--font-display);font-size:1.2rem;letter-spacing:3px;cursor:pointer;transition:.3s;margin-top:10px}
+    .submit-btn:hover{background:var(--accent2);color:#000;box-shadow:0 0 20px rgba(255,60,60,.4)}
+    @media(max-width:768px){
+      nav{display:none}
+      .topbar{display:flex}
+      .drawer{display:flex}
+      .drawer-overlay{display:block;pointer-events:none}
+      .drawer-overlay.open{pointer-events:all}
+      main{margin-left:0;padding:76px 16px 40px;align-items:flex-start}
+      .contact-card{padding:24px}
+      h2{font-size:2rem}
     }
   </style>
 </head>
 <body>
-
   <nav>
-    <div class="nav-logo"><h1>CYPEK</h1><div class="sub" style="font-size:9px; color:var(--dim);">lecimyszacunek.pl</div></div>
+    <div class="nav-logo"><h1>CYPEKTAURUS</h1><div class="sub">lecimyszacunek.pl</div></div>
     <div class="nav-links">
-      <a href="/home" class="nav-link"><span class="icon">◈</span> Główna</a>
-      <a href="/" class="nav-link"><span class="icon">⬡</span> Panel BLE</a>
-      <a href="/page3" class="nav-link"><span class="icon">🛒</span> Sklep</a>
-      <a href="/kontakt" class="nav-link active"><span class="icon">✉</span> Kontakt</a>
+      <a href="/home"    class="nav-link"><span>◈</span> Główna</a>
+      <a href="/"        class="nav-link"><span>⬡</span> Panel BLE</a>
+      <a href="/page3"   class="nav-link"><span>🛒</span> Sklep</a>
+      <a href="/kontakt" class="nav-link active"><span>✉</span> Kontakt</a>
     </div>
+    <div class="nav-footer">v1.0 · KG200 · 2026</div>
   </nav>
-
+  <div class="topbar">
+    <div class="topbar-logo">CYPEK</div>
+    <button class="hamburger" onclick="toggleDrawer()">☰</button>
+  </div>
+  <div class="drawer" id="drawer">
+    <a href="/home"    class="nav-link" onclick="closeDrawer()"><span>◈</span> Główna</a>
+    <a href="/"        class="nav-link" onclick="closeDrawer()"><span>⬡</span> Panel BLE</a>
+    <a href="/page3"   class="nav-link" onclick="closeDrawer()"><span>🛒</span> Sklep</a>
+    <a href="/kontakt" class="nav-link active" onclick="closeDrawer()"><span>✉</span> Kontakt</a>
+  </div>
+  <div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
   <main>
     <div class="contact-card">
       <h2>LUŹNE PYTANKO</h2>
       <form action="/send-email" method="POST">
         <div class="form-group">
-          <label>Twoje imię </label>
+          <label>Twoje imię</label>
           <input type="text" name="name" placeholder="PODAJ KSYWE....🤣🤣" required>
         </div>
-        
         <div class="form-group">
-          <label>E-mail </label>
+          <label>E-mail</label>
           <input type="email" name="email" placeholder="MAIL@DOMENA.PL" required>
         </div>
-
         <div class="form-group">
           <label>Cel Twojej wizyty</label>
           <select name="reason">
@@ -98,16 +96,17 @@
             <option value="inne">INNE (BEZ SENSU)</option>
           </select>
         </div>
-
         <div class="form-group">
           <label>Treść wiadomości</label>
           <textarea name="message" rows="5" placeholder="PISZ TUTAJ..." required></textarea>
         </div>
-
         <button type="submit" class="submit-btn">WYŚLIJ TRANSMISJĘ</button>
       </form>
     </div>
   </main>
-
+  <script>
+    function toggleDrawer(){document.getElementById('drawer').classList.toggle('open');document.getElementById('overlay').classList.toggle('open')}
+    function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
+  </script>
 </body>
 </html>
