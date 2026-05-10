@@ -3,103 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AUTH — CYPEK CONTROL</title>
-  <link rel="icon" type="image/png" href="icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <title>Panel BLE — lecimyszacunek.pl</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#0a0a0a;--panel:#111;--border:#1e1e1e;--accent:#00ff88;--text:#e0e0e0;--dim:#444;--dim2:#2a2a2a;--nav-w:220px;--font-mono:'Share Tech Mono',monospace;--font-display:'Bebas Neue',sans-serif}
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--text);font-family:var(--font-mono);display:flex;min-height:100vh;
-      background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,#111 39px,#111 40px),
-      repeating-linear-gradient(90deg,transparent,transparent 39px,#111 39px,#111 40px)}
-    nav{width:var(--nav-w);min-height:100vh;background:#0d0d0d;border-right:1px solid var(--border);display:flex;flex-direction:column;padding:36px 0 24px;position:fixed;top:0;left:0;bottom:0;z-index:100}
-    .nav-logo{padding:0 24px 32px;border-bottom:1px solid var(--border)}
-    .nav-logo h1{font-family:var(--font-display);font-size:1.6rem;letter-spacing:4px;color:var(--accent);line-height:1}
-    .nav-logo .sub{font-size:9px;color:var(--dim);letter-spacing:3px;margin-top:5px;text-transform:uppercase}
-    .nav-links{flex:1;padding:24px 0;display:flex;flex-direction:column;gap:2px}
-    .nav-link{display:flex;align-items:center;gap:12px;padding:11px 24px;color:var(--dim);text-decoration:none;font-size:11px;letter-spacing:3px;text-transform:uppercase;transition:all .15s;border-left:2px solid transparent}
-    .nav-link:hover{color:var(--text);background:rgba(255,255,255,.03);border-left-color:var(--dim)}
-    .nav-link.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,255,136,.04)}
-    .nav-footer{padding:16px 24px;border-top:1px solid var(--border);font-size:9px;color:var(--dim2);letter-spacing:2px}
-    .topbar{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#0d0d0d;border-bottom:1px solid var(--border);z-index:200;align-items:center;padding:0 20px;gap:16px}
-    .topbar-logo{font-family:var(--font-display);font-size:1.4rem;letter-spacing:4px;color:var(--accent);flex:1}
-    .hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:8px;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
-    .drawer{display:none;position:fixed;top:56px;left:0;right:0;background:#0d0d0d;border-bottom:1px solid var(--border);z-index:199;flex-direction:column;transform:translateY(-100%);transition:transform .25s ease;pointer-events:none}
-    .drawer.open{transform:translateY(0);pointer-events:all}
-    .drawer .nav-link{padding:16px 24px;font-size:12px;border-left:none;border-bottom:1px solid var(--border)}
-    .drawer .nav-link:last-child{border-bottom:none}
-    .drawer .nav-link.active{color:var(--accent);background:rgba(0,255,136,.04)}
-    .drawer-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(0,0,0,.6);z-index:198}
-    main{margin-left:var(--nav-w);flex:1;display:flex;align-items:center;justify-content:center;padding:40px;min-height:100vh}
-    .login-box{width:320px;padding:40px;background:var(--panel);border:1px solid var(--border);position:relative;text-align:center}
-    .login-box::before,.login-box::after{content:'';position:absolute;width:12px;height:12px;border-color:var(--accent);border-style:solid}
-    .login-box::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
-    .login-box::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
-    .login-box h2{font-family:var(--font-display);font-size:1.8rem;letter-spacing:4px;color:var(--accent);margin-bottom:6px}
-    .login-sub{font-size:9px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:28px}
-    .divider{display:flex;align-items:center;gap:12px;margin-bottom:24px}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-    .divider span{font-size:9px;letter-spacing:3px;color:var(--dim)}
-    input[type=password]{width:100%;background:#000;border:1px solid var(--border);color:var(--accent);padding:12px 14px;margin-bottom:14px;font-family:var(--font-mono);font-size:14px;outline:none;letter-spacing:4px;text-align:center;transition:border-color .2s}
-    input[type=password]:focus{border-color:var(--accent)}
-    input[type=password]::placeholder{color:var(--dim);letter-spacing:2px;font-size:11px}
-    button{width:100%;padding:13px;background:var(--accent);border:none;color:#000;font-family:var(--font-mono);font-size:12px;font-weight:bold;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all .2s}
-    button:hover{background:#00ffaa}
-    button:active{transform:scale(.99)}
-    .error{color:#ff3c3c;font-size:11px;margin-top:12px;letter-spacing:2px;display:none}
-    @media(max-width:768px){
-      nav{display:none}
-      .topbar{display:flex}
-      .drawer{display:flex}
-      .drawer-overlay{display:block;pointer-events:none}
-      .drawer-overlay.open{pointer-events:all}
-      main{margin-left:0;padding:80px 20px 40px}
-      .login-box{width:100%;max-width:360px}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #000; --surface: #0a0a0a;
+      --border: rgba(255,255,255,0.08);
+      --text: #fff; --muted: rgba(255,255,255,0.5); --dim: rgba(255,255,255,0.25);
+      --nav-w: 240px;
+      --font: 'Inter', -apple-system, sans-serif;
+    }
+    html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; display: flex; -webkit-font-smoothing: antialiased; }
+
+    nav { width: var(--nav-w); min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
+    .nav-top { padding: 20px; border-bottom: 1px solid var(--border); }
+    .nav-brand { font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .nav-brand .dot { width: 8px; height: 8px; background: #fff; border-radius: 2px; flex-shrink: 0; }
+    .nav-links { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 1px; }
+    .nav-link { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 13px; transition: all 0.15s; }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .nav-link.active { color: var(--text); background: rgba(255,255,255,0.08); }
+    .nav-link svg { flex-shrink: 0; opacity: 0.6; }
+    .nav-link.active svg { opacity: 1; }
+    .nav-bottom { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+
+    .topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 52px; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); z-index: 200; align-items: center; padding: 0 16px; gap: 12px; }
+    .topbar-brand { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+    .hamburger { background: none; border: none; color: var(--text); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background 0.15s; }
+    .hamburger:hover { background: rgba(255,255,255,0.08); }
+
+    .drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: #000; border-bottom: 1px solid var(--border); z-index: 199; flex-direction: column; transform: translateY(-100%); transition: transform 0.2s ease; pointer-events: none; }
+    .drawer.open { transform: translateY(0); pointer-events: all; }
+    .drawer .nav-link { padding: 14px 20px; border-radius: 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .drawer .nav-link:last-child { border-bottom: none; }
+    .drawer-overlay { display: none; position: fixed; inset: 0; top: 52px; background: rgba(0,0,0,0.7); z-index: 198; pointer-events: none; }
+    .drawer-overlay.open { pointer-events: all; }
+
+    main { margin-left: var(--nav-w); flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px; min-height: 100vh; }
+
+    /* LOGIN */
+    .login-wrap { width: 100%; max-width: 380px; }
+    .login-label { font-size: 12px; color: var(--muted); margin-bottom: 32px; letter-spacing: 0.02em; }
+    .login-title { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .login-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .field input {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); padding: 10px 14px;
+      font-family: var(--font); font-size: 14px; outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+    .field input:focus { border-color: rgba(255,255,255,0.3); }
+    .field input::placeholder { color: var(--dim); }
+    .btn-primary {
+      width: 100%; padding: 10px 16px;
+      background: #fff; color: #000;
+      border: none; border-radius: 8px;
+      font-family: var(--font); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; margin-top: 4px;
+    }
+    .btn-primary:hover { background: rgba(255,255,255,0.9); }
+    .btn-primary:active { transform: scale(0.99); }
+    .error-msg { font-size: 12px; color: #f87171; margin-top: 10px; display: none; }
+    .divider-line { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+    .divider-line::before, .divider-line::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider-line span { font-size: 12px; color: var(--dim); }
+
+    @media (max-width: 768px) {
+      nav { display: none; }
+      .topbar { display: flex; }
+      .drawer { display: flex; }
+      .drawer-overlay { display: block; }
+      main { margin-left: 0; padding: 72px 24px 40px; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
-  <nav>
-    <div class="nav-logo"><h1>CYPEKTAURUS</h1><div class="sub">lecimyszacunek.pl</div></div>
-    <div class="nav-links">
-      <a href="/home"    class="nav-link"><span>◈</span> Główna</a>
-      <a href="/"        class="nav-link active"><span>⬡</span> Panel BLE</a>
-      <a href="/page3"   class="nav-link"><span>🛒</span> Sklep</a>
-      <a href="/kontakt" class="nav-link"><span>✉</span> Kontakt</a>
-    </div>
-    <div class="nav-footer">v1.0 · KG200 · 2026</div>
-  </nav>
-  <div class="topbar">
-    <div class="topbar-logo">CYPEK</div>
-    <button class="hamburger" onclick="toggleDrawer()">☰</button>
+
+<nav>
+  <div class="nav-top">
+    <a href="/home" class="nav-brand"><div class="dot"></div> lecimyszacunek.pl</a>
   </div>
-  <div class="drawer" id="drawer">
-    <a href="/home"    class="nav-link" onclick="closeDrawer()"><span>◈</span> Główna</a>
-    <a href="/"        class="nav-link active" onclick="closeDrawer()"><span>⬡</span> Panel BLE</a>
-    <a href="/page3"   class="nav-link" onclick="closeDrawer()"><span>🛒</span> Sklep</a>
-    <a href="/kontakt" class="nav-link" onclick="closeDrawer()"><span>✉</span> Kontakt</a>
+  <div class="nav-links">
+    <a href="/home" class="nav-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Główna
+    </a>
+    <a href="/" class="nav-link active">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M4.93 4.93a10 10 0 000 14.14"/></svg>
+      Panel BLE
+    </a>
+    <a href="/page3" class="nav-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      Sklep
+    </a>
+    <a href="/kontakt" class="nav-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Kontakt
+    </a>
   </div>
-  <div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
-  <main>
-    <div class="login-box">
-      <h2>PANEL</h2>
-      <div class="login-sub">Panel BLE — autoryzacja</div>
-      <div class="divider"><span>klucz dostępu</span></div>
-      <input type="password" id="pass" placeholder="ENTER ACCESS KEY" onkeydown="if(event.key==='Enter')login()">
-      <button onclick="login()">AUTORYZUJ →</button>
-      <div id="error" class="error">✗ INVALID ACCESS KEY</div>
+  <div class="nav-bottom">v1.0 · KG200 · 2026</div>
+</nav>
+
+<div class="topbar">
+  <span class="topbar-brand">lecimyszacunek.pl</span>
+  <button class="hamburger" onclick="toggleDrawer()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+</div>
+<div class="drawer" id="drawer">
+  <a href="/home"    class="nav-link" onclick="closeDrawer()">Główna</a>
+  <a href="/"        class="nav-link active" onclick="closeDrawer()">Panel BLE</a>
+  <a href="/page3"   class="nav-link" onclick="closeDrawer()">Sklep</a>
+  <a href="/kontakt" class="nav-link" onclick="closeDrawer()">Kontakt</a>
+</div>
+<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
+
+<main>
+  <div class="login-wrap">
+    <div class="login-label">lecimyszacunek.pl / panel-ble</div>
+    <h1 class="login-title">Autoryzacja</h1>
+    <p class="login-sub">Podaj klucz dostępu żeby wejść do panelu BLE.</p>
+
+    <div class="divider-line"><span>klucz dostępu</span></div>
+
+    <div class="field">
+      <label>Access key</label>
+      <input type="password" id="pass" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')login()">
     </div>
-  </main>
-  <script>
-    function toggleDrawer(){document.getElementById('drawer').classList.toggle('open');document.getElementById('overlay').classList.toggle('open')}
-    function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
-    async function login(){
-      const pass=document.getElementById('pass').value;
-      const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass})});
-      if(res.ok){window.location.href='/panel'}
-      else{const e=document.getElementById('error');e.style.display='block';document.getElementById('pass').value='';document.getElementById('pass').focus();setTimeout(()=>{e.style.display='none'},3000)}
-    }
-  </script>
+    <button class="btn-primary" onclick="login()">Wejdź do panelu →</button>
+    <div id="error" class="error-msg">✗ Nieprawidłowy klucz dostępu</div>
+  </div>
+</main>
+
+<script>
+  function toggleDrawer(){document.getElementById('drawer').classList.toggle('open');document.getElementById('overlay').classList.toggle('open')}
+  function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
+  async function login(){
+    const pass=document.getElementById('pass').value;
+    const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass})});
+    if(res.ok){window.location.href='/panel'}
+    else{const e=document.getElementById('error');e.style.display='block';document.getElementById('pass').value='';document.getElementById('pass').focus();setTimeout(()=>{e.style.display='none'},3000)}
+  }
+</script>
 </body>
 </html>
