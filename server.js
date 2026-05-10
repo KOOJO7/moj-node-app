@@ -13,6 +13,7 @@ if (!ADMIN_PASSWORD) {
 // Inicjalizacja Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ─── MIDDLEWARE ───────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
@@ -21,7 +22,11 @@ app.use(session({
     saveUninitialized: false
 }));
 
-// STATIC ROUTES
+// ─── PLIKI STATYCZNE (TO ROZWIĄZUJE PROBLEM IKONY) ────────────
+// Ta linia mówi: "Jeśli plik istnieje w głównym folderze, po prostu go wyślij"
+app.use(express.static(__dirname)); 
+
+// ─── STATIC ROUTES ───────────────────────────────────────────
 app.get('/',        (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/home',    (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 app.get('/page3',   (req, res) => res.sendFile(path.join(__dirname, 'page3.html')));
@@ -81,7 +86,6 @@ app.post('/send-email', async (req, res) => {
         'inne':          'Inne (bez sensu)'
     };
 
-    // Sprawdź czy Resend jest skonfigurowany
     if (!process.env.RESEND_API_KEY) {
         console.log('⚠️ BRAK RESEND_API_KEY');
         return res.status(500).send(`
@@ -112,9 +116,8 @@ app.post('/send-email', async (req, res) => {
             </div>
         `;
 
-        // Wysyłka przez Resend
         const { data, error } = await resend.emails.send({
-            from: `CYPEK Kontakt <onboarding@resend.dev>`, // Tymczasowo używamy domeny Resend
+            from: `CYPEK Kontakt <onboarding@resend.dev>`,
             to: process.env.MAIL_TO || 'koszojad2131@gmail.com',
             reply_to: email,
             subject: `[lecimyszacunek.pl] ${reasonLabels[reason] || reason} — ${name}`,
@@ -162,7 +165,7 @@ app.post('/send-email', async (req, res) => {
     }
 });
 
-// CATCH ALL
+// CATCH ALL (Zawsze na samym końcu!)
 app.use((req, res) => res.redirect('/home'));
 
 const PORT = process.env.PORT || 3000;
