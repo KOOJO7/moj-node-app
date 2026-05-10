@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const app = express();
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -10,12 +10,15 @@ if (!ADMIN_PASSWORD) {
     process.exit(1);
 }
 
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET || 'cypek_secret_2026',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { secure: false } // na Render bez HTTPS wymuszenia
 }));
 
 // STATIC ROUTES
@@ -26,7 +29,6 @@ app.get('/kontakt', (req, res) => res.sendFile(path.join(__dirname, 'kontakt.htm
 
 // LOGIN
 app.post('/login', (req, res) => {
-    console.log('Login attempt');
     if (req.body.pass === ADMIN_PASSWORD) { 
         req.session.authenticated = true; 
         res.sendStatus(200);
@@ -35,7 +37,7 @@ app.post('/login', (req, res) => {
     }
 });
 
-// PANEL (protected)
+// PANEL
 app.get('/panel', (req, res) => {
     if (req.session.authenticated) {
         res.sendFile(path.join(__dirname, 'panel.html'));
@@ -49,32 +51,24 @@ app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/')); 
 });
 
-// ─── SEND EMAIL ────────────────────────────────────────────────
-// Dla testów - symulacja (jeśli brak zmiennych)
-const USE_FAKE_MAIL = !process.env.GMAIL_USER || !process.env.GMAIL_PASS;
-
+// ─── SEND EMAIL przez RESEND ───────────────────────────────────
 app.post('/send-email', async (req, res) => {
     console.log('=== /send-email called ===');
-    console.log('Body:', req.body);
-    
     const { name, email, reason, message } = req.body;
 
     if (!name || !email || !message) {
-        console.log('Missing fields');
         return res.status(400).send(`
             <!DOCTYPE html>
             <html>
-            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+            <head><meta charset="UTF-8">
             <title>BŁĄD</title>
-            <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
             <style>
-                body{background:#0a0a0a;color:#e0e0e0;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-                .box{text-align:center;padding:40px;border:1px solid #ff3c3c;max-width:380px}
-                h1{color:#ff3c3c;font-family:'Bebas Neue',letter-spacing:4px}
+                body{background:#0a0a0a;color:#e0e0e0;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+                .box{text-align:center;padding:40px;border:1px solid #ff3c3c;}
                 a{color:#00ff88}
             </style>
             </head>
-            <body><div class="box"><h1>BŁĄD</h1><p>Wypełnij wszystkie pola!</p><a href="/kontakt">← WRÓĆ</a></div></body>
+            <body><div class="box"><h1 style="color:#ff3c3c">BŁĄD</h1><p>Wypełnij wszystkie pola!</p><a href="/kontakt">← WRÓĆ</a></div></body>
             </html>
         `);
     }
@@ -87,68 +81,56 @@ app.post('/send-email', async (req, res) => {
         'inne':          'Inne (bez sensu)'
     };
 
-    // FAKE MAIL MODE (dla testów bez Gmail config)
-    if (USE_FAKE_MAIL) {
-        console.log('⚠️ URUCHOMIONO TRYB FAKE MAIL (brak GMAIL_USER/GMAIL_PASS)');
-        console.log(`📧 [FAKE] Wiadomość od: ${name} <${email}>`);
-        console.log(`📧 [FAKE] Temat: ${reasonLabels[reason] || reason}`);
-        console.log(`📧 [FAKE] Treść: ${message}`);
+    // Tryb awaryjny - jeśli brak API klucza
+    if (!process.env.RESEND_API_KEY) {
+        console.log('⚠️ BRAK RESEND_API_KEY - zapisuję do logów');
+        console.log(`📧 Od: ${name} <${email}>`);
+        console.log(`📧 Temat: ${reasonLabels[reason] || reason}`);
+        console.log(`📧 Treść: ${message}`);
         
         return res.send(`
             <!DOCTYPE html>
             <html>
-            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-            <title>WYSŁANO (TEST)</title>
-            <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+            <head><meta charset="UTF-8">
+            <title>WYSŁANO (LOG)</title>
             <style>
-                body{background:#0a0a0a;color:#e0e0e0;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-                .box{text-align:center;padding:40px;border:1px solid #ffaa00;max-width:380px}
-                h1{color:#ffaa00;font-family:'Bebas Neue',letter-spacing:4px}
-                .warning{color:#ffaa00;font-size:10px;margin-top:20px}
+                body{background:#0a0a0a;color:#e0e0e0;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+                .box{text-align:center;padding:40px;border:1px solid #ffaa00;}
                 a{color:#00ff88}
             </style>
             </head>
-            <body><div class="box"><h1>WYSŁANO (TRYB TEST)</h1><p>Wiadomość została zapisana w logach serwera.</p><p><strong>${name}</strong>, dziękujemy za kontakt!</p><div class="warning">⚠️ Skonfiguruj GMAIL_USER i GMAIL_PASS na Renderze żeby wysyłać prawdziwe maile.</div><br><a href="/home">← POWRÓT</a></div></body>
+            <body><div class="box"><h1 style="color:#ffaa00">ZAPISANO DO LOGÓW</h1><p>Wiadomość została zapisana.</p><a href="/home">← POWRÓT</a></div></body>
             </html>
         `);
     }
 
-    // PRAWIDŁOWY MAIL (z Gmail)
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_PASS
-        },
-        // Timeout ustawienia
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000
-    });
-
     try {
-        console.log('Próba wysłania maila przez Gmail...');
-        
-        await transporter.sendMail({
-            from: `"CYPEK KONTAKT" <${process.env.GMAIL_USER}>`,
-            to: process.env.MAIL_TO || process.env.GMAIL_USER,
-            replyTo: email,
-            subject: `[lecimyszacunek.pl] ${reasonLabels[reason] || reason} — ${name}`,
-            html: `<div style="font-family:monospace;background:#0a0a0a;color:#e0e0e0;padding:30px">
+        const htmlContent = `
+            <div style="font-family:monospace;background:#0a0a0a;color:#e0e0e0;padding:30px">
                 <h2 style="color:#00ff88">NOWA TRANSMISJA</h2>
                 <p><b style="color:#3cf">OD:</b> ${name}</p>
-                <p><b style="color:#3cf">MAIL:</b> <a href="mailto:${email}" style="color:#00ff88">${email}</a></p>
+                <p><b style="color:#3cf">MAIL:</b> ${email}</p>
                 <p><b style="color:#3cf">CEL:</b> ${reasonLabels[reason] || reason}</p>
                 <hr style="border-color:#333;margin:20px 0">
                 <p style="line-height:1.8;color:#aaa">${message.replace(/\n/g,'<br>')}</p>
-            </div>`
+            </div>
+        `;
+
+        const toEmail = process.env.MAIL_TO || process.env.FROM_EMAIL;
+        
+        await resend.emails.send({
+            from: `CYPEK <noreply@${process.env.DOMAIN || 'lecimyszacunek.pl'}>`,
+            to: toEmail,
+            reply_to: email,
+            subject: `[lecimyszacunek.pl] ${reasonLabels[reason] || reason} — ${name}`,
+            html: htmlContent
         });
 
-        console.log('Mail wysłany pomyślnie!');
+        console.log('Mail wysłany przez Resend!');
         
         res.send(`<!DOCTYPE html>
         <html>
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+        <head><meta charset="UTF-8">
         <title>WYSŁANO</title>
         <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
         <style>
@@ -163,24 +145,23 @@ app.post('/send-email', async (req, res) => {
         </html>`);
 
     } catch (err) {
-        console.error('Mail error:', err);
+        console.error('Resend error:', err);
         res.status(500).send(`<!DOCTYPE html>
         <html>
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+        <head><meta charset="UTF-8">
         <title>BŁĄD</title>
         <style>
-            body{background:#0a0a0a;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-            .box{text-align:center;padding:40px;border:1px solid #ff3c3c;max-width:380px}
-            h1{color:#ff3c3c;font-family:'Bebas Neue'}
+            body{background:#0a0a0a;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+            .box{text-align:center;padding:40px;border:1px solid #ff3c3c;}
             a{color:#00ff88}
         </style>
         </head>
-        <body><div class="box"><h1>BŁĄD</h1><p>Nie udało się wysłać wiadomości.</p><p style="color:#333;font-size:9px">${err.message}</p><a href="/kontakt">← WRÓĆ</a></div></body>
+        <body><div class="box"><h1 style="color:#ff3c3c">BŁĄD</h1><p>${err.message}</p><a href="/kontakt">← WRÓĆ</a></div></body>
         </html>`);
     }
 });
 
-// CATCH ALL - redirect to home
+// CATCH ALL
 app.use((req, res) => res.redirect('/home'));
 
 const PORT = process.env.PORT || 3000;
