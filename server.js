@@ -10,6 +10,7 @@ if (!ADMIN_PASSWORD) {
     process.exit(1);
 }
 
+// Inicjalizacja Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(express.urlencoded({ extended: true }));
@@ -17,8 +18,7 @@ app.use(express.json());
 app.use(session({
     secret: process.env.SESSION_SECRET || 'cypek_secret_2026',
     resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false } // na Render bez HTTPS wymuszenia
+    saveUninitialized: false
 }));
 
 // STATIC ROUTES
@@ -51,7 +51,7 @@ app.get('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/')); 
 });
 
-// ─── SEND EMAIL przez RESEND ───────────────────────────────────
+// ─── SEND EMAIL ───────────────────────────────────────────────
 app.post('/send-email', async (req, res) => {
     console.log('=== /send-email called ===');
     const { name, email, reason, message } = req.body;
@@ -81,25 +81,21 @@ app.post('/send-email', async (req, res) => {
         'inne':          'Inne (bez sensu)'
     };
 
-    // Tryb awaryjny - jeśli brak API klucza
+    // Sprawdź czy Resend jest skonfigurowany
     if (!process.env.RESEND_API_KEY) {
-        console.log('⚠️ BRAK RESEND_API_KEY - zapisuję do logów');
-        console.log(`📧 Od: ${name} <${email}>`);
-        console.log(`📧 Temat: ${reasonLabels[reason] || reason}`);
-        console.log(`📧 Treść: ${message}`);
-        
-        return res.send(`
+        console.log('⚠️ BRAK RESEND_API_KEY');
+        return res.status(500).send(`
             <!DOCTYPE html>
             <html>
             <head><meta charset="UTF-8">
-            <title>WYSŁANO (LOG)</title>
+            <title>BŁĄD</title>
             <style>
                 body{background:#0a0a0a;color:#e0e0e0;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;}
                 .box{text-align:center;padding:40px;border:1px solid #ffaa00;}
                 a{color:#00ff88}
             </style>
             </head>
-            <body><div class="box"><h1 style="color:#ffaa00">ZAPISANO DO LOGÓW</h1><p>Wiadomość została zapisana.</p><a href="/home">← POWRÓT</a></div></body>
+            <body><div class="box"><h1 style="color:#ffaa00">BŁĄD KONFIGURACJI</h1><p>Brak klucza API. Skontaktuj się z administratorem.</p><a href="/kontakt">← WRÓĆ</a></div></body>
             </html>
         `);
     }
@@ -109,24 +105,28 @@ app.post('/send-email', async (req, res) => {
             <div style="font-family:monospace;background:#0a0a0a;color:#e0e0e0;padding:30px">
                 <h2 style="color:#00ff88">NOWA TRANSMISJA</h2>
                 <p><b style="color:#3cf">OD:</b> ${name}</p>
-                <p><b style="color:#3cf">MAIL:</b> ${email}</p>
+                <p><b style="color:#3cf">EMAIL:</b> ${email}</p>
                 <p><b style="color:#3cf">CEL:</b> ${reasonLabels[reason] || reason}</p>
                 <hr style="border-color:#333;margin:20px 0">
-                <p style="line-height:1.8;color:#aaa">${message.replace(/\n/g,'<br>')}</p>
+                <p style="line-height:1.8;color:#aaa">${message.replace(/\n/g,'<br>').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
             </div>
         `;
 
-        const toEmail = process.env.MAIL_TO || process.env.FROM_EMAIL;
-        
-        await resend.emails.send({
-            from: `CYPEK <noreply@${process.env.DOMAIN || 'lecimyszacunek.pl'}>`,
-            to: toEmail,
+        // Wysyłka przez Resend
+        const { data, error } = await resend.emails.send({
+            from: `CYPEK Kontakt <onboarding@resend.dev>`, // Tymczasowo używamy domeny Resend
+            to: process.env.MAIL_TO || 'koszojad2131@gmail.com',
             reply_to: email,
             subject: `[lecimyszacunek.pl] ${reasonLabels[reason] || reason} — ${name}`,
             html: htmlContent
         });
 
-        console.log('Mail wysłany przez Resend!');
+        if (error) {
+            console.error('Resend error:', error);
+            throw new Error(error.message);
+        }
+
+        console.log('Mail wysłany! ID:', data?.id);
         
         res.send(`<!DOCTYPE html>
         <html>
@@ -137,7 +137,7 @@ app.post('/send-email', async (req, res) => {
             body{background:#0a0a0a;color:#e0e0e0;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
             .box{text-align:center;padding:40px;border:1px solid #1e1e1e;max-width:380px}
             h1{font-family:'Bebas Neue';font-size:3rem;color:#00ff88;letter-spacing:4px}
-            a{display:inline-block;padding:12px 24px;border:1px solid #00ff88;color:#00ff88;text-decoration:none;font-size:11px;letter-spacing:3px}
+            a{display:inline-block;padding:12px 24px;border:1px solid #00ff88;color:#00ff88;text-decoration:none;font-size:11px;letter-spacing:3px;margin-top:20px}
             a:hover{background:#00ff88;color:#000}
         </style>
         </head>
@@ -145,18 +145,19 @@ app.post('/send-email', async (req, res) => {
         </html>`);
 
     } catch (err) {
-        console.error('Resend error:', err);
+        console.error('Send error:', err);
         res.status(500).send(`<!DOCTYPE html>
         <html>
         <head><meta charset="UTF-8">
         <title>BŁĄD</title>
         <style>
             body{background:#0a0a0a;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;}
-            .box{text-align:center;padding:40px;border:1px solid #ff3c3c;}
+            .box{text-align:center;padding:40px;border:1px solid #ff3c3c;max-width:380px}
+            h1{color:#ff3c3c;font-family:'Bebas Neue';letter-spacing:4px}
             a{color:#00ff88}
         </style>
         </head>
-        <body><div class="box"><h1 style="color:#ff3c3c">BŁĄD</h1><p>${err.message}</p><a href="/kontakt">← WRÓĆ</a></div></body>
+        <body><div class="box"><h1>BŁĄD</h1><p>${err.message}</p><a href="/kontakt">← WRÓĆ</a></div></body>
         </html>`);
     }
 });
