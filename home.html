@@ -30,7 +30,45 @@
       min-height: 100vh;
       display: flex;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
+
+    /* ── DYNAMIC GRADIENT LIGHT ── */
+    .gradient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .gradient-bg::before {
+      content: '';
+      position: absolute;
+      width: 900px; height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.018) 35%, transparent 70%);
+      top: var(--gy, 40%);
+      left: var(--gx, 55%);
+      transform: translate(-50%, -50%);
+      transition: top 1.2s cubic-bezier(0.25,0.46,0.45,0.94), left 1.2s cubic-bezier(0.25,0.46,0.45,0.94);
+      filter: blur(2px);
+    }
+    .gradient-bg::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(180,200,255,0.04) 0%, transparent 70%);
+      bottom: 10%;
+      right: 15%;
+      animation: floatB 8s ease-in-out infinite alternate;
+    }
+    @keyframes floatB {
+      0%   { transform: translate(0,0) scale(1); opacity: 0.6; }
+      100% { transform: translate(-40px, 30px) scale(1.15); opacity: 1; }
+    }
+    /* Ensure content is above gradient */
+    nav, .topbar, .drawer, .drawer-overlay, main { position: relative; z-index: 1; }
 
     /* ── SIDEBAR ── */
     nav {
@@ -102,10 +140,10 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 52px;
-      background: rgba(0,0,0,0.9);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,10,0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
       z-index: 200;
       align-items: center;
       padding: 0 16px;
@@ -125,8 +163,8 @@
       display: none;
       position: fixed;
       top: 52px; left: 0; right: 0;
-      background: #000;
-      border-bottom: 1px solid var(--border);
+      background: #0d0d0d;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
       z-index: 199;
       flex-direction: column;
       transform: translateY(-100%);
@@ -259,6 +297,8 @@
 </head>
 <body>
 
+<div class="gradient-bg" id="gradBg"></div>
+
 <nav>
   <div class="nav-top">
     <a href="/home" class="nav-brand"><div class="dot"></div> lecimyszacunek.pl</a>
@@ -349,6 +389,24 @@
     document.getElementById('drawer').classList.remove('open');
     document.getElementById('overlay').classList.remove('open');
   }
+
+  // Dynamic gradient that follows mouse
+  (function(){
+    const bg = document.getElementById('gradBg');
+    let tx = 55, ty = 40, cx = 55, cy = 40;
+    document.addEventListener('mousemove', e => {
+      tx = (e.clientX / window.innerWidth) * 100;
+      ty = (e.clientY / window.innerHeight) * 100;
+    });
+    function animate() {
+      cx += (tx - cx) * 0.04;
+      cy += (ty - cy) * 0.04;
+      bg.style.setProperty('--gx', cx + '%');
+      bg.style.setProperty('--gy', cy + '%');
+      requestAnimationFrame(animate);
+    }
+    animate();
+  })();
 </script>
 </body>
 </html>
