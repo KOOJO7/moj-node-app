@@ -11,31 +11,45 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #000; --surface: #0a0a0a;
-      --border: rgba(255,255,255,0.08);
+      --bg: #000; --surface: #0a0a0a; --surface2: #111;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
       --text: #fff; --muted: rgba(255,255,255,0.5); --dim: rgba(255,255,255,0.25);
-      --nav-w: 240px;
-      --font: 'Inter', -apple-system, sans-serif;
+      --green: #22c55e; --red: #f87171;
+      --nav-w: 240px; --font: 'Inter', -apple-system, sans-serif;
     }
     html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
     body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; display: flex; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 
-    /* ── DYNAMIC GRADIENT LIGHT ── */
-    .gradient-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-    .gradient-bg::before {
-      content: ''; position: absolute; width: 900px; height: 700px; border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.018) 35%, transparent 70%);
-      top: var(--gy, 40%); left: var(--gx, 55%); transform: translate(-50%,-50%);
-      transition: top 1.2s cubic-bezier(0.25,0.46,0.45,0.94), left 1.2s cubic-bezier(0.25,0.46,0.45,0.94); filter: blur(2px);
-    }
-    .gradient-bg::after {
-      content: ''; position: absolute; width: 500px; height: 400px; border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(180,200,255,0.04) 0%, transparent 70%);
-      bottom: 10%; right: 15%; animation: floatB 8s ease-in-out infinite alternate;
-    }
-    @keyframes floatB { 0%{transform:translate(0,0) scale(1);opacity:.6} 100%{transform:translate(-40px,30px) scale(1.15);opacity:1} }
-    nav, .topbar, .drawer, .drawer-overlay, main { position: relative; z-index: 1; }
 
+    /* ── RESEND-STYLE GLOW ── */
+    .glow-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .glow-a {
+      position: absolute;
+      bottom: -80px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 450px; border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(100,100,100,0.2) 0%, rgba(60,60,60,0.08) 45%, transparent 70%);
+      filter: blur(35px);
+    }
+    .glow-b {
+      position: absolute;
+      bottom: 40px; left: 50%;
+      transform: translateX(-50%) rotate(-5deg);
+      width: 130vw; height: 120px;
+      background: linear-gradient(90deg, transparent 8%, rgba(140,140,140,0.07) 30%, rgba(170,170,170,0.14) 50%, rgba(140,140,140,0.07) 70%, transparent 92%);
+      filter: blur(16px);
+    }
+    .glow-c {
+      position: absolute;
+      width: 700px; height: 700px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.032) 0%, transparent 65%);
+      transform: translate(-50%, -50%);
+      left: 50%; top: 40%;
+      transition: left 0.9s ease, top 0.9s ease;
+      filter: blur(1px);
+    }
+
+
+    /* ── SIDEBAR ── */
     nav { width: var(--nav-w); min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
     .nav-top { padding: 20px; border-bottom: 1px solid var(--border); }
     .nav-brand { font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
@@ -48,109 +62,103 @@
     .nav-link.active svg { opacity: 1; }
     .nav-bottom { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
 
-    .topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 52px; background: rgba(10,10,10,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.12); z-index: 200; align-items: center; padding: 0 16px; gap: 12px; }
-    .topbar-brand { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
-    .hamburger { background: none; border: none; color: var(--text); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: background 0.15s; }
-    .hamburger:hover { background: rgba(255,255,255,0.08); }
 
-    .drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: #0d0d0d; border-bottom: 1px solid rgba(255,255,255,0.12); z-index: 199; flex-direction: column; transform: translateY(-100%); transition: transform 0.2s ease; pointer-events: none; }
+    /* ── TOPBAR mobile ── */
+    .topbar {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; height: 52px;
+      background: #0a0a0a;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      z-index: 300;
+      align-items: center;
+      padding: 0 16px; gap: 12px;
+    }
+    .topbar-brand { font-size: 13px; font-weight: 600; color: #fff; flex: 1; }
+    .hamburger { background: none; border: none; color: #fff; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 6px; }
+
+    /* ── DRAWER ── */
+    .drawer {
+      display: none;
+      position: fixed;
+      top: 52px; left: 0; right: 0;
+      background: #111;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      z-index: 299;
+      flex-direction: column;
+      transform: translateY(-110%);
+      transition: transform 0.25s ease;
+      pointer-events: none;
+    }
     .drawer.open { transform: translateY(0); pointer-events: all; }
-    .drawer .nav-link { padding: 14px 20px; border-radius: 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .drawer .nav-link { padding: 14px 20px; border-radius: 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 14px; color: rgba(255,255,255,0.75); }
+    .drawer .nav-link.active { color: #fff; }
     .drawer .nav-link:last-child { border-bottom: none; }
-    .drawer-overlay { display: none; position: fixed; inset: 0; top: 52px; background: rgba(0,0,0,0.7); z-index: 198; pointer-events: none; }
+    .drawer-overlay { display: none; position: fixed; inset: 0; top: 52px; background: rgba(0,0,0,0.65); z-index: 298; pointer-events: none; }
     .drawer-overlay.open { pointer-events: all; }
 
-    main { margin-left: var(--nav-w); flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px; min-height: 100vh; }
-
-    /* LOGIN */
+    main { margin-left: var(--nav-w); flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px; min-height: 100vh; position: relative; z-index: 1; }
     .login-wrap { width: 100%; max-width: 380px; }
-    .login-label { font-size: 12px; color: var(--muted); margin-bottom: 32px; letter-spacing: 0.02em; }
+    .login-label { font-size: 12px; color: var(--muted); margin-bottom: 32px; }
     .login-title { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
     .login-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; }
     .field { margin-bottom: 12px; }
     .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .field input {
-      width: 100%; background: var(--surface);
-      border: 1px solid var(--border); border-radius: 8px;
-      color: var(--text); padding: 10px 14px;
-      font-family: var(--font); font-size: 14px; outline: none;
-      transition: border-color 0.15s;
-      -webkit-appearance: none;
-    }
+    .field input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 14px; font-family: var(--font); font-size: 14px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
     .field input:focus { border-color: rgba(255,255,255,0.3); }
     .field input::placeholder { color: var(--dim); }
-    .btn-primary {
-      width: 100%; padding: 10px 16px;
-      background: #fff; color: #000;
-      border: none; border-radius: 8px;
-      font-family: var(--font); font-size: 14px; font-weight: 500;
-      cursor: pointer; transition: all 0.15s; margin-top: 4px;
-    }
+    .btn-primary { width: 100%; padding: 10px 16px; background: #fff; color: #000; border: none; border-radius: 8px; font-family: var(--font); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
     .btn-primary:hover { background: rgba(255,255,255,0.9); }
     .btn-primary:active { transform: scale(0.99); }
     .error-msg { font-size: 12px; color: #f87171; margin-top: 10px; display: none; }
     .divider-line { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
     .divider-line::before, .divider-line::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .divider-line span { font-size: 12px; color: var(--dim); }
-
     @media (max-width: 768px) {
       nav { display: none; }
       .topbar { display: flex; }
       .drawer { display: flex; }
       .drawer-overlay { display: block; }
       main { margin-left: 0; padding: 72px 24px 40px; align-items: flex-start; }
+      .glow-b { display: none; }
     }
   </style>
 </head>
 <body>
-<div class="gradient-bg" id="gradBg"></div>
+<div class="glow-wrap">
+  <div class="glow-a"></div>
+  <div class="glow-b"></div>
+  <div class="glow-c" id="glowC"></div>
+</div>
+
 <nav>
-  <div class="nav-top">
-    <a href="/home" class="nav-brand"><div class="dot"></div> lecimyszacunek.pl</a>
-  </div>
+  <div class="nav-top"><a href="/home" class="nav-brand"><div class="dot"></div> lecimyszacunek.pl</a></div>
   <div class="nav-links">
-    <a href="/home" class="nav-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-      Główna
-    </a>
-    <a href="/" class="nav-link active">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M4.93 4.93a10 10 0 000 14.14"/></svg>
-      Panel BLE
-    </a>
-    <a href="/page3" class="nav-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-      Sklep
-    </a>
-    <a href="/kontakt" class="nav-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      Kontakt
-    </a>
+    <a href="/home" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Główna</a>
+    <a href="/" class="nav-link active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M4.93 4.93a10 10 0 000 14.14"/></svg>Panel BLE</a>
+    <a href="/page3" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>Sklep</a>
+    <a href="/kontakt" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Kontakt</a>
   </div>
   <div class="nav-bottom">v1.0 · KG200 · 2026</div>
 </nav>
 
 <div class="topbar">
   <span class="topbar-brand">lecimyszacunek.pl</span>
-  <button class="hamburger" onclick="toggleDrawer()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
+  <button class="hamburger" onclick="toggleDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
 </div>
 <div class="drawer" id="drawer">
-  <a href="/home"    class="nav-link" onclick="closeDrawer()">Główna</a>
-  <a href="/"        class="nav-link active" onclick="closeDrawer()">Panel BLE</a>
-  <a href="/page3"   class="nav-link" onclick="closeDrawer()">Sklep</a>
+  <a href="/home"    class="nav-link"    onclick="closeDrawer()">Główna</a>
+  <a href="/"        class="nav-link active"     onclick="closeDrawer()">Panel BLE</a>
+  <a href="/page3"   class="nav-link"   onclick="closeDrawer()">Sklep</a>
   <a href="/kontakt" class="nav-link" onclick="closeDrawer()">Kontakt</a>
 </div>
 <div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
-
 <main>
   <div class="login-wrap">
     <div class="login-label">lecimyszacunek.pl / panel-ble</div>
     <h1 class="login-title">Autoryzacja</h1>
     <p class="login-sub">Podaj klucz dostępu żeby wejść do panelu BLE.</p>
-
     <div class="divider-line"><span>klucz dostępu</span></div>
-
     <div class="field">
       <label>Access key</label>
       <input type="password" id="pass" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')login()">
@@ -159,24 +167,22 @@
     <div id="error" class="error-msg">✗ Nieprawidłowy klucz dostępu</div>
   </div>
 </main>
-
 <script>
-  function toggleDrawer(){document.getElementById('drawer').classList.toggle('open');document.getElementById('overlay').classList.toggle('open')}
-  function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
-  async function login(){
-    const pass=document.getElementById('pass').value;
-    const res=await fetch('/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pass})});
-    if(res.ok){window.location.href='/panel'}
-    else{const e=document.getElementById('error');e.style.display='block';document.getElementById('pass').value='';document.getElementById('pass').focus();setTimeout(()=>{e.style.display='none'},3000)}
+
+  function toggleDrawer() { document.getElementById('drawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
+  function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+
+  // Mouse glow
+  const _gc = document.getElementById('glowC');
+  if (_gc) document.addEventListener('mousemove', e => { _gc.style.left = e.clientX + 'px'; _gc.style.top = e.clientY + 'px'; });
+
+  async function login() {
+    const pass = document.getElementById('pass').value;
+    const res = await fetch('/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pass }) });
+    if (res.ok) { window.location.href = '/panel'; }
+    else { const e = document.getElementById('error'); e.style.display = 'block'; document.getElementById('pass').value = ''; document.getElementById('pass').focus(); setTimeout(() => { e.style.display = 'none'; }, 3000); }
   }
-  // Dynamic gradient
-  (function(){
-    const bg=document.getElementById('gradBg');
-    let tx=55,ty=40,cx=55,cy=40;
-    document.addEventListener('mousemove',e=>{tx=(e.clientX/window.innerWidth)*100;ty=(e.clientY/window.innerHeight)*100;});
-    function animate(){cx+=(tx-cx)*0.04;cy+=(ty-cy)*0.04;bg.style.setProperty('--gx',cx+'%');bg.style.setProperty('--gy',cy+'%');requestAnimationFrame(animate);}
-    animate();
-  })();
 </script>
 </body>
 </html>
