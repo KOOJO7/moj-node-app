@@ -339,7 +339,7 @@
     try{
       btn.disabled=true;
       setConn('Skanowanie...','connecting');
-      ble=await navigator.bluetooth.requestDevice({filters:[{name:'CYPEK-BT'}],optionalServices:[SVC]});
+      ble = await navigator.bluetooth.requestDevice({filters: [{namePrefix: 'cypek'}], optionalServices: [SVC]});
       setConn('Łączenie...','connecting');
       const srv=await ble.gatt.connect();
       const svc=await srv.getPrimaryService(SVC);
