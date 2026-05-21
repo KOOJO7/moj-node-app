@@ -224,7 +224,6 @@
   </div>
 
   <div class="sections">
-    <!-- LICZNIK -->
     <div class="section" id="sLicznik">
       <div class="section-title">Licznik</div>
       <div class="lval-big" id="lval">—</div>
@@ -258,7 +257,6 @@
       <div class="l-feedback" id="lFb"></div>
     </div>
 
-    <!-- WATY -->
     <div class="section" id="sWaty">
       <div class="section-title">Moc lasera</div>
       <div class="wval-big" id="wval">15</div>
@@ -317,11 +315,23 @@
     try{
       await cL.writeValue(new TextEncoder().encode(op+String(val)));
       const raw=await cL.readValue();
-      const nv=parseInt(new TextDecoder().decode(raw));
-      if(!isNaN(nv)){
-        document.getElementById('lval').textContent=nv;
-        if(op==='+')flashL('flash-up');else if(op==='-')flashL('flash-down');else flashL('flash-reset');
-        fbL(op==='='?'Reset wykonany':'✓ '+op+val,'ok');
+      const txt = new TextDecoder().decode(raw);
+      
+      if(txt.length > 0) {
+        const nv=parseInt(txt);
+        if(!isNaN(nv)){
+          document.getElementById('lval').textContent=nv;
+          if(op==='+')flashL('flash-up');else if(op==='-')flashL('flash-down');else flashL('flash-reset');
+          fbL(op==='='?'Reset wykonany':'✓ '+op+val,'ok');
+        }
+      } else {
+        // Lokalny fallback kalkulacji wartości, jeśli bufor powrotny z ESP byłby pusty
+        let currentVal = parseInt(document.getElementById('lval').textContent) || 0;
+        if(op === '+') currentVal += val;
+        else if(op === '-') currentVal = Math.max(0, currentVal - val);
+        else if(op === '=') currentVal = val;
+        document.getElementById('lval').textContent = currentVal;
+        fbL('Wysłano rozkaz','ok');
       }
     }catch(e){fbL('Błąd: '+e.message,'err')}
   }
@@ -339,18 +349,45 @@
     try{
       btn.disabled=true;
       setConn('Skanowanie...','connecting');
-      ble = await navigator.bluetooth.requestDevice({filters: [{namePrefix: 'cypek'}], optionalServices: [SVC]});
+      
+      // POPRAWKA: Szukanie po pełnej nazwie urządzenia (zgodnie z kodem ESP32)
+      ble = await navigator.bluetooth.requestDevice({filters: [{name: 'cypektaurus kg 200'}], optionalServices: [SVC]});
+      
       setConn('Łączenie...','connecting');
       const srv=await ble.gatt.connect();
       const svc=await srv.getPrimaryService(SVC);
       cW=await svc.getCharacteristic(CW);
       cL=await svc.getCharacteristic(CL);
-      const wr=await cW.readValue();const we=parseInt(new TextDecoder().decode(wr));if(!isNaN(we))setW(we);
-      const lr=await cL.readValue();const le=parseInt(new TextDecoder().decode(lr));document.getElementById('lval').textContent=isNaN(le)?0:le;
+      
+      // POPRAWKA: Bezpieczne czytanie watów na starcie połączenia
+      try {
+        const wr = await cW.readValue();
+        const txtW = new TextDecoder().decode(wr);
+        if(txtW.length > 0) {
+          const we = parseInt(txtW);
+          if(!isNaN(we)) setW(we);
+        } else {
+          setW(curW);
+        }
+      } catch(e) { console.log("Błąd odczytu watów, ustawiam domyślne"); setW(curW); }
+
+      // POPRAWKA: Bezpieczne czytanie licznika na starcie połączenia
+      try {
+        const lr = await cL.readValue();
+        const txtL = new TextDecoder().decode(lr);
+        if(txtL.length > 0) {
+          const le = parseInt(txtL);
+          document.getElementById('lval').textContent = isNaN(le) ? 0 : le;
+        } else {
+          document.getElementById('lval').textContent = 0;
+        }
+      } catch(e) { console.log("Błąd odczytu licznika, ustawiam 0"); document.getElementById('lval').textContent = 0; }
+
       setConn('Połączono · '+ble.name,'connected');
       btn.textContent='Rozłącz';btn.disabled=false;
       document.getElementById('sWaty').classList.add('active');
       document.getElementById('sLicznik').classList.add('active');
+      
       ble.addEventListener('gattserverdisconnected',()=>{
         setConn('Rozłączono','');btn.textContent='Połącz';btn.disabled=false;
         document.getElementById('sWaty').classList.remove('active');
@@ -371,6 +408,9 @@
       btn.disabled=true;
       await cW.writeValue(new TextEncoder().encode(String(curW)));
       fb.textContent='✓ Wysłano '+curW+'W';fb.className='send-feedback ok';
+      
+      // POPRAWKA: Usunięcie podświetlenia "changed" po udanej synchronizacji
+      document.getElementById('wval').classList.remove('changed');
     }catch(e){fb.textContent='Błąd wysyłania';fb.className='send-feedback err';}
     finally{btn.disabled=false;setTimeout(()=>{fb.className='send-feedback'},2500)}
   }
