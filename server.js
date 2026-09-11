@@ -21,6 +21,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }));
+// Blokada bezpośredniego dostępu do panel.html (żeby nie omijać sesji przez express.static)
+app.get('/panel.html', (req, res) => res.redirect('/panel'));
+
 app.use(express.static(__dirname));
 
 function requireAuth(req, res, next) {
