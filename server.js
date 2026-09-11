@@ -23,6 +23,11 @@ app.use(session({
 }));
 app.use(express.static(__dirname));
 
+function requireAuth(req, res, next) {
+    if (req.session && req.session.authenticated) return next();
+    res.status(401).json({ error: 'Brak autoryzacji' });
+}
+
 // ─── REVIEWS FILE ─────────────────────────────────────────────
 const REVIEWS_FILE = path.join(__dirname, 'reviews.json');
 function loadReviews() {
@@ -59,6 +64,76 @@ app.post('/api/reviews', (req, res) => {
     if (reviews.length > 200) reviews.pop();
     saveReviews(reviews);
     res.json(review);
+});
+
+// ─── KAPITAŁ / PANEL TRADINGOWY ───────────────────────────────
+const CAPITAL_FILE = path.join(__dirname, 'capital.json');
+const STARTING_CAPITAL = 29.18;
+
+function loadCapital() {
+    try {
+        return JSON.parse(fs.readFileSync(CAPITAL_FILE, 'utf8'));
+    } catch (e) {
+        const init = { startingCapital: STARTING_CAPITAL, currentCapital: STARTING_CAPITAL, entries: [] };
+        saveCapital(init);
+        return init;
+    }
+}
+function saveCapital(data) {
+    fs.writeFileSync(CAPITAL_FILE, JSON.stringify(data, null, 2));
+}
+
+// GET aktualny stan kapitału + historia
+app.get('/api/capital', requireAuth, (req, res) => {
+    res.json(loadCapital());
+});
+
+// POST nowy wpis: trade (wynik transakcji) albo deposit (dopłata kapitału)
+app.post('/api/capital/entry', requireAuth, (req, res) => {
+    const { type, amount, note } = req.body;
+    if (!['trade', 'deposit'].includes(type)) {
+        return res.status(400).json({ error: 'Zły typ wpisu' });
+    }
+    const amt = Math.round(parseFloat(amount) * 100) / 100;
+    if (isNaN(amt) || amt === 0) {
+        return res.status(400).json({ error: 'Podaj poprawną, niezerową kwotę' });
+    }
+    if (note && String(note).length > 200) {
+        return res.status(400).json({ error: 'Notatka za długa' });
+    }
+
+    const data = loadCapital();
+    data.currentCapital = Math.round((data.currentCapital + amt) * 100) / 100;
+
+    const entry = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        type,
+        amount: amt,
+        note: (note || '').toString().trim(),
+        balanceAfter: data.currentCapital
+    };
+    data.entries.push(entry);
+    if (data.entries.length > 2000) data.entries.shift();
+
+    saveCapital(data);
+    res.json(data);
+});
+
+// DELETE — cofnięcie TYLKO ostatniego wpisu (żeby saldo zostało spójne, "zero pomyłek")
+app.delete('/api/capital/entry/:id', requireAuth, (req, res) => {
+    const data = loadCapital();
+    if (data.entries.length === 0) {
+        return res.status(400).json({ error: 'Brak wpisów do cofnięcia' });
+    }
+    const last = data.entries[data.entries.length - 1];
+    if (String(last.id) !== req.params.id) {
+        return res.status(400).json({ error: 'Można cofnąć tylko ostatni wpis' });
+    }
+    data.entries.pop();
+    data.currentCapital = Math.round((data.currentCapital - last.amount) * 100) / 100;
+    saveCapital(data);
+    res.json(data);
 });
 
 // ─── STATIC ROUTES ───────────────────────────────────────────
