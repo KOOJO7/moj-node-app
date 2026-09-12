@@ -62,11 +62,11 @@
 <body>
 
 <header class="top">
-  <a href="/home" class="brand"><span class="chip"></span>lecimyszacunek</a>
+  <a href="/panel" class="brand"><span class="chip"></span>lecimyszacunek</a>
   <nav class="top-links">
-    <a href="/panel.html" class="active">Panel</a>
-    <a href="/zapis.html">Zapis</a>
-    <a href="/prognoza.html">Prognoza</a>
+    <a href="/panel" class="active">Panel</a>
+    <a href="/zapis">Zapis</a>
+    <a href="/prognoza">Prognoza</a>
     <a href="/logout" class="signout">Wyloguj</a>
   </nav>
 </header>
@@ -136,7 +136,7 @@
 </main>
 
 <script>
-  const fmt = n => (n >= 0 ? '' : '-') + Math.abs(n).toFixed(2) + '$';
+  const fmt = n => (n >= 0 ? '' : '-') + Math.abs(n).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '$';
   const fmtSigned = n => (n > 0 ? '+' : '') + fmt(n);
 
   let state = { startingCapital: 0, currentCapital: 0, entries: [] };
