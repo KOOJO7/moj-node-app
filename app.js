@@ -236,27 +236,61 @@
 
   async function fetchMarketQuote(code, force) {
     const cached = loadQuoteCache(code);
-    if (!force && cached && cached.source === 'live' && (Date.now() - cached.time) < QUOTE_MAX_AGE) {
-      return cached;
+
+    if (
+        !force &&
+        cached &&
+        cached.source === 'live' &&
+        (Date.now() - cached.time) < QUOTE_MAX_AGE
+    ) {
+        return cached;
     }
-    const symbol = STOOQ_MAP[code] || code.toLowerCase();
+
     try {
-      const res = await fetch('https://stooq.com/q/l/?s=' + encodeURIComponent(symbol) + '&f=sd2t2ohlc&h&e=csv');
-      if (!res.ok) throw new Error('Stooq niedostępny');
-      const text = await res.text();
-      const line = text.trim().split('\n')[1] || '';
-      const cols = line.split(',');
-      const price = parseFloat(cols[6]);
-      if (!isFinite(price) || price <= 0) throw new Error('Brak notowania');
-      const data = { price, time: Date.now(), source: 'live' };
-      saveQuoteCache(code, data);
-      return data;
+        const res = await fetch(
+            '/api/market/' + encodeURIComponent(code),
+            {
+                method: 'GET',
+                credentials: 'same-origin',
+                cache: 'no-store'
+            }
+        );
+
+        if (res.status === 401) {
+            window.location.href = '/';
+            return cached || null;
+        }
+
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+            throw new Error(data.error || 'Nie udało się pobrać rynku');
+        }
+
+        const quote = {
+            price: Number(data.price),
+            time: Number(data.time) || Date.now(),
+            source: 'live'
+        };
+
+        if (
+            !Number.isFinite(quote.price) ||
+            quote.price <= 0
+        ) {
+            throw new Error('Serwer zwrócił niepoprawną cenę');
+        }
+
+        saveQuoteCache(code, quote);
+
+        return quote;
+
     } catch (e) {
-      // Nie udało się pobrać na żywo — oddaj to, co jest w cache (choćby ręczne
-      // albo nieświeże), zamiast twierdzić, że danych nie ma wcale.
-      return cached || null;
+        console.error('Błąd rynku ' + code + ':', e);
+
+        // Jeśli mamy starą cenę, nadal ją pokazujemy.
+        return cached || null;
     }
-  }
+}
 
   function setManualQuote(code, price) {
     const p = parseFloat(price);
