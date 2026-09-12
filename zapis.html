@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0c0b09">
+<title>Zapis — lecimyszacunek.pl</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .cap-strip { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+  .cap-strip .lbl { font-size: 13px; color: var(--ink-dim); }
+  .cap-strip .val { font-family: var(--serif); font-size: 26px; font-weight: 500; }
+
+  .forms { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .hint { font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; margin-bottom: 16px; }
+
+  .recent { margin-top: 16px; }
+  .recent .entry { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size: 13px; }
+  .recent .entry:last-child { border-bottom: none; }
+  .recent .when { color: var(--ink-faint); font-size: 12px; }
+  .recent .what { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .recent .amt { font-family: var(--serif); font-weight: 500; text-align: right; }
+
+  @media (max-width: 760px) {
+    .forms { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/home" class="brand"><span class="chip"></span>lecimyszacunek</a>
+  <nav class="top-links">
+    <a href="/panel">Panel</a>
+    <a href="/zapis" class="active">Zapis</a>
+    <a href="/prognoza">Prognoza</a>
+    <a href="/logout" class="signout">Wyloguj</a>
+  </nav>
+</header>
+
+<main>
+
+  <section>
+    <div class="cap-strip">
+      <span class="lbl">Kapitał obecny</span>
+      <span class="val" id="capValue">—</span>
+    </div>
+    <p class="hint">Zapisuj tu każdą zamkniętą transakcję i każdą dopłatę spoza tradingu — panel przeliczy resztę.</p>
+  </section>
+
+  <hr class="rule">
+
+  <section class="forms">
+    <div class="panel">
+      <div class="panel-title">Zapisz transakcję</div>
+      <div class="toggle">
+        <button type="button" class="on win" id="btnWin" onclick="setMode('win')">Zysk</button>
+        <button type="button" id="btnLoss" onclick="setMode('loss')">Strata</button>
+      </div>
+      <div class="chips" id="tradeChips"></div>
+      <div class="row2">
+        <input class="field" type="number" step="0.01" min="0" id="tradeAmount" placeholder="Kwota, np. 3.50">
+        <button class="btn gold" onclick="submitTrade()">Zapisz</button>
+      </div>
+      <input class="field-note" type="text" id="tradeNote" placeholder="Notatka — para, setup (opcjonalnie)">
+      <p class="feedback" id="tradeFb"></p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Dopłata kapitału</div>
+      <p class="hint">Poza tradingiem — np. dorzucasz 5$ z boku. Dolicza się do kapitału, ale nie liczy się jako wynik.</p>
+      <div class="chips" id="depositChips"></div>
+      <div class="row2">
+        <input class="field" type="number" step="0.01" id="depositAmount" placeholder="Kwota (ujemna = wypłata)">
+        <button class="btn ghost" onclick="submitDeposit()">Dopłać</button>
+      </div>
+      <p class="feedback" id="depositFb"></p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="panel">
+    <div class="panel-title">Ostatnie wpisy</div>
+    <div class="recent" id="recentList"><div style="font-size:13px;color:var(--ink-faint);padding:20px 0;text-align:center">Brak wpisów.</div></div>
+  </section>
+
+</main>
+
+<script>
+  const fmt = n => (n >= 0 ? '' : '-') + Math.abs(n).toFixed(2) + '$';
+  const fmtSigned = n => (n > 0 ? '+' : '') + fmt(n);
+
+  let state = { startingCapital: 0, currentCapital: 0, entries: [] };
+  let mode = 'win';
+
+  const QUICK_TRADE = [1, 2, 3, 5, 10];
+  const QUICK_DEPOSIT = [5, 10, 20, 50];
+
+  document.getElementById('tradeChips').innerHTML = QUICK_TRADE
+    .map(v => `<button type="button" class="chip-btn" onclick="fillTrade(${v})">${v}$</button>`).join('');
+  document.getElementById('depositChips').innerHTML = QUICK_DEPOSIT
+    .map(v => `<button type="button" class="chip-btn" onclick="fillDeposit(${v})">${v}$</button>`).join('');
+
+  function fillTrade(v) { document.getElementById('tradeAmount').value = v; }
+  function fillDeposit(v) { document.getElementById('depositAmount').value = v; }
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btnWin').classList.toggle('on', m === 'win');
+    document.getElementById('btnLoss').classList.toggle('on', m === 'loss');
+  }
+
+  async function loadState() {
+    try {
+      const res = await fetch('/api/capital');
+      if (!res.ok) throw new Error('unauth');
+      state = await res.json();
+      render();
+    } catch (e) {
+      document.getElementById('capValue').textContent = 'błąd';
+    }
+  }
+
+  function render() {
+    document.getElementById('capValue').textContent = fmt(state.currentCapital);
+    renderRecent();
+  }
+
+  function renderRecent() {
+    const list = document.getElementById('recentList');
+    const entries = [...state.entries].reverse().slice(0, 8);
+    if (entries.length === 0) { list.innerHTML = '<div style="font-size:13px;color:var(--ink-faint);padding:20px 0;text-align:center">Brak wpisów.</div>'; return; }
+    list.innerHTML = entries.map(e => {
+      const d = new Date(e.date);
+      const dateStr = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+      const label = e.note ? escapeHtml(e.note) : (e.type === 'trade' ? 'transakcja' : 'dopłata kapitału');
+      return `<div class="entry">
+        <div class="when">${dateStr}</div>
+        <div class="what">${label}</div>
+        <div class="amt ${e.amount >= 0 ? 'up' : 'down'}">${fmtSigned(e.amount)}</div>
+      </div>`;
+    }).join('');
+  }
+  function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  async function submitTrade() {
+    const fb = document.getElementById('tradeFb');
+    const raw = parseFloat(document.getElementById('tradeAmount').value);
+    if (isNaN(raw) || raw <= 0) { fb.textContent = 'Podaj kwotę większą od 0'; fb.className = 'feedback err'; return; }
+    const amount = mode === 'win' ? raw : -raw;
+    const note = document.getElementById('tradeNote').value;
+    await postEntry('trade', amount, note, fb);
+    document.getElementById('tradeAmount').value = '';
+    document.getElementById('tradeNote').value = '';
+  }
+
+  async function submitDeposit() {
+    const fb = document.getElementById('depositFb');
+    const amount = parseFloat(document.getElementById('depositAmount').value);
+    if (isNaN(amount) || amount === 0) { fb.textContent = 'Podaj niezerową kwotę'; fb.className = 'feedback err'; return; }
+    await postEntry('deposit', amount, '', fb);
+    document.getElementById('depositAmount').value = '';
+  }
+
+  async function postEntry(type, amount, note, fb) {
+    try {
+      const res = await fetch('/api/capital/entry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, amount, note })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Błąd');
+      state = data;
+      render();
+      fb.textContent = 'Zapisano'; fb.className = 'feedback ok';
+      setTimeout(() => { fb.textContent = ''; fb.className = 'feedback'; }, 2500);
+    } catch (e) {
+      fb.textContent = e.message; fb.className = 'feedback err';
+    }
+  }
+
+  loadState();
+</script>
+</body>
+</html>
