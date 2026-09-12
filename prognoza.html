@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0c0b09">
+<title>Prognoza — lecimyszacunek.pl</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  .intro { font-size: 13.5px; color: var(--ink-dim); line-height: 1.65; max-width: 62ch; margin-bottom: 4px; }
+
+  .setup { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 14px; margin-bottom: 16px; }
+  .setup .g { display: flex; flex-direction: column; }
+  .period-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 8px; }
+
+  .checkline { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-dim); margin-top: 4px; }
+  .checkline input { accent-color: var(--gold); width: 15px; height: 15px; }
+
+  .result-hero { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 26px 0 6px; }
+  .result-value { font-family: var(--serif); font-weight: 500; font-size: clamp(38px, 7vw, 56px); letter-spacing: -0.015em; line-height: 1; color: var(--gold); }
+  .result-meta { text-align: right; font-size: 13px; color: var(--ink-dim); line-height: 1.6; }
+
+  .result-line { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 22px; }
+  .result-line b { color: var(--ink); font-weight: 500; }
+
+  .chart-box { position: relative; height: 240px; }
+
+  @media (max-width: 760px) {
+    .setup { grid-template-columns: 1fr; }
+    .result-hero { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .result-meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a href="/home" class="brand"><span class="chip"></span>lecimyszacunek</a>
+  <nav class="top-links">
+    <a href="/panel">Panel</a>
+    <a href="/zapis">Zapis</a>
+    <a href="/prognoza" class="active">Prognoza</a>
+    <a href="/logout" class="signout">Wyloguj</a>
+  </nav>
+</header>
+
+<main>
+
+  <section>
+    <p class="intro">Procent składany — jeśli codziennie w dni robocze zarabiasz stałe X% kapitału, ile z tego wychodzi po dłuższym czasie. Ustaw punkt startowy i horyzont, reszta liczy się sama.</p>
+  </section>
+
+  <hr class="rule">
+
+  <section class="panel">
+    <div class="panel-title">Założenia</div>
+
+    <div class="setup">
+      <div class="g">
+        <label class="f-label" for="startCap">Kapitał startowy</label>
+        <input class="field" type="number" step="0.01" id="startCap" placeholder="np. 29.18">
+      </div>
+      <div class="g">
+        <label class="f-label" for="dailyRate">Wzrost dzienny (%)</label>
+        <input class="field" type="number" step="0.1" id="dailyRate" value="5">
+      </div>
+      <div class="g">
+        <label class="f-label">Horyzont</label>
+        <div class="period-row">
+          <input class="field" type="number" min="1" id="periodAmount" value="30">
+          <select class="field" id="periodUnit">
+            <option value="dni">dni</option>
+            <option value="tygodnie">tygodni</option>
+            <option value="miesiace" selected>miesięcy</option>
+            <option value="lata">lat</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="chips" id="presetChips"></div>
+
+    <label class="checkline"><input type="checkbox" id="skipWeekends" checked> Pomijaj soboty i niedziele</label>
+  </section>
+
+  <div class="result-hero">
+    <div>
+      <p class="hero-label">Przewidywany kapitał</p>
+      <div class="result-value" id="resultValue">—</div>
+    </div>
+    <div class="result-meta" id="resultMeta">—</div>
+  </div>
+  <p class="result-line" id="resultLine">—</p>
+
+  <div class="panel">
+    <div class="panel-title">Krzywa wzrostu</div>
+    <div class="chart-box"><canvas id="growthChart"></canvas></div>
+  </div>
+
+</main>
+
+<script>
+  const fmt = n => (n >= 0 ? '' : '-') + Math.abs(n).toFixed(2) + '$';
+  let growthChart;
+
+  const PRESETS = [
+    { label: '7 dni', amount: 7, unit: 'dni' },
+    { label: '2 tygodnie', amount: 2, unit: 'tygodnie' },
+    { label: '1 miesiąc', amount: 1, unit: 'miesiace' },
+    { label: '3 miesiące', amount: 3, unit: 'miesiace' },
+    { label: '6 miesięcy', amount: 6, unit: 'miesiace' },
+    { label: '1 rok', amount: 1, unit: 'lata' },
+  ];
+  document.getElementById('presetChips').innerHTML = PRESETS
+    .map((p, i) => `<button type="button" class="chip-btn" data-i="${i}" onclick="applyPreset(${i})">${p.label}</button>`).join('');
+
+  function applyPreset(i) {
+    document.getElementById('periodAmount').value = PRESETS[i].amount;
+    document.getElementById('periodUnit').value = PRESETS[i].unit;
+    compute();
+  }
+
+  function addPeriod(date, amount, unit) {
+    const d = new Date(date);
+    if (unit === 'dni') d.setDate(d.getDate() + amount);
+    else if (unit === 'tygodnie') d.setDate(d.getDate() + amount * 7);
+    else if (unit === 'miesiace') d.setMonth(d.getMonth() + amount);
+    else if (unit === 'lata') d.setFullYear(d.getFullYear() + amount);
+    return d;
+  }
+
+  function tradingDaysBetween(start, end, skipWeekends) {
+    const days = [];
+    const cur = new Date(start);
+    cur.setDate(cur.getDate() + 1);
+    cur.setHours(0, 0, 0, 0);
+    const endDay = new Date(end);
+    endDay.setHours(0, 0, 0, 0);
+    while (cur <= endDay) {
+      const dow = cur.getDay();
+      if (!skipWeekends || (dow !== 0 && dow !== 6)) days.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return days;
+  }
+
+  function compute() {
+    const startCap = parseFloat(document.getElementById('startCap').value) || 0;
+    const rate = (parseFloat(document.getElementById('dailyRate').value) || 0) / 100;
+    const amount = Math.max(1, parseInt(document.getElementById('periodAmount').value) || 1);
+    const unit = document.getElementById('periodUnit').value;
+    const skipWeekends = document.getElementById('skipWeekends').checked;
+
+    const today = new Date();
+    const endDate = addPeriod(today, amount, unit);
+    const tradingDays = tradingDaysBetween(today, endDate, skipWeekends);
+    const n = tradingDays.length;
+
+    const finalValue = startCap * Math.pow(1 + rate, n);
+    const growthPct = startCap > 0 ? ((finalValue / startCap) - 1) * 100 : 0;
+
+    document.getElementById('resultValue').textContent = fmt(finalValue);
+    document.getElementById('resultMeta').innerHTML =
+      `${n} sesji${skipWeekends ? ' roboczych' : ''}<br>do ${endDate.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+    document.getElementById('resultLine').innerHTML =
+      `Start: <b>${fmt(startCap)}</b> · wzrost: <b>${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(0)}%</b> · mnożnik: <b>x${(finalValue / (startCap || 1)).toFixed(2)}</b>`;
+
+    renderChart(startCap, rate, tradingDays);
+  }
+
+  function renderChart(startCap, rate, tradingDays) {
+    const n = tradingDays.length;
+    const step = n > 150 ? Math.ceil(n / 150) : 1;
+
+    const labels = ['start'];
+    const values = [startCap];
+    for (let i = step; i <= n; i += step) {
+      values.push(startCap * Math.pow(1 + rate, i));
+      labels.push(tradingDays[i - 1].toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }));
+    }
+    if ((n - 1) % step !== 0 && n > 0) {
+      values.push(startCap * Math.pow(1 + rate, n));
+      labels.push(tradingDays[n - 1].toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }));
+    }
+
+    const ctx = document.getElementById('growthChart');
+    if (growthChart) growthChart.destroy();
+    growthChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderColor: '#c8953c',
+          backgroundColor: 'rgba(200,149,60,0.08)',
+          fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
+        scales: {
+          x: { ticks: { color: 'rgba(244,239,228,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } },
+          y: { ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } }
+        }
+      }
+    });
+  }
+
+  ['startCap', 'dailyRate', 'periodAmount', 'periodUnit', 'skipWeekends'].forEach(id => {
+    document.getElementById(id).addEventListener('input', compute);
+    document.getElementById(id).addEventListener('change', compute);
+  });
+
+  async function init() {
+    try {
+      const res = await fetch('/api/capital');
+      if (res.ok) {
+        const state = await res.json();
+        document.getElementById('startCap').value = state.currentCapital.toFixed(2);
+      } else {
+        document.getElementById('startCap').value = '29.18';
+      }
+    } catch (e) {
+      document.getElementById('startCap').value = '29.18';
+    }
+    compute();
+  }
+
+  init();
+</script>
+</body>
+</html>
