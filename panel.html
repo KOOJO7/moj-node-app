@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0c0b09">
+<meta name="theme-color" content="#070f0e">
 <title>Panel — lecimyszacunek.pl</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="app.js"></script>
 <style>
+  .hero-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+
   .goal-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
   .goal-title { font-size: 14.5px; color: var(--ink); }
   .goal-title span { color: var(--ink-faint); font-size: 13px; }
@@ -25,20 +28,24 @@
   .goal-status.hit { color: var(--good); }
   .goal-status.under { color: var(--bad); }
 
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); }
-  .stat { padding: 4px 22px; border-left: 1px solid var(--line); }
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); }
+  .stat { padding: 4px 18px; border-left: 1px solid var(--line); }
   .stat:first-child { padding-left: 0; border-left: none; }
-  .stat-label { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 8px; }
-  .stat-val { font-family: var(--serif); font-size: 25px; font-weight: 500; }
+  .stat-label { font-size: 12px; color: var(--ink-faint); margin-bottom: 8px; }
+  .stat-val { font-family: var(--serif); font-size: 22px; font-weight: 500; }
   .stat-val.up { color: var(--good); }
   .stat-val.down { color: var(--bad); }
   .stat-val.flat { color: var(--ink-faint); }
-  .stat-note { font-size: 12px; color: var(--ink-faint); margin-top: 5px; }
+  .stat-note { font-size: 11.5px; color: var(--ink-faint); margin-top: 5px; }
 
   .charts { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
   .chart-box { position: relative; height: 200px; }
 
-  .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .heat-legend { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-faint); }
+  .heat-legend .cell { width: 11px; height: 11px; border-radius: 3px; }
+
+  .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+  .history-actions { display: flex; gap: 8px; }
   .undo { font-size: 12.5px; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: all 0.15s; }
   .undo:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-faint); }
   .undo:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -52,10 +59,12 @@
 
   @media (max-width: 760px) {
     .charts { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: 1fr; gap: 18px; }
-    .stat { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 16px; }
-    .stat:first-child { border-top: none; padding-top: 4px; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 18px 12px; }
+    .stat { border-left: none; padding-left: 0; }
+    .stat:nth-child(odd) { padding-right: 12px; }
     .entry { grid-template-columns: 60px 1fr auto; }
+    .heatmap { grid-template-columns: repeat(auto-fill, 13px); }
+    .heatmap .cell { width: 13px; height: 13px; }
   }
 </style>
 </head>
@@ -67,16 +76,30 @@
     <a href="/panel" class="active">Panel</a>
     <a href="/zapis">Zapis</a>
     <a href="/prognoza">Prognoza</a>
-    <a href="/logout" class="signout">Wyloguj</a>
   </nav>
+  <div class="top-right">
+    <div class="cur-switch" id="curSwitch"></div>
+    <a href="/logout" class="signout" style="text-decoration:none;font-size:13px">Wyloguj</a>
+  </div>
 </header>
 
 <main>
 
   <section>
-    <p class="hero-label">Kapitał obecny</p>
-    <div class="hero-value" id="capValue">—</div>
+    <div class="hero-row">
+      <div>
+        <p class="hero-label">Kapitał obecny</p>
+        <div class="hero-value num" id="capValue">— <svg class="spark" id="capSpark" width="90" height="30"></svg></div>
+      </div>
+    </div>
     <p class="hero-delta" id="capDelta" style="margin-top:12px;font-size:14px;color:var(--ink-dim)">ładowanie danych…</p>
+  </section>
+
+  <hr class="rule">
+
+  <section class="panel">
+    <div class="panel-title">Rynki</div>
+    <div id="marketPanel"></div>
   </section>
 
   <hr class="rule">
@@ -84,7 +107,7 @@
   <section>
     <div class="goal-top">
       <div class="goal-title">Cel na dziś <span>— 5% kapitału</span></div>
-      <div class="goal-num" id="goalNum">—</div>
+      <div class="goal-num num" id="goalNum">—</div>
     </div>
     <div class="track"><div class="fill" id="goalFill"></div></div>
     <p class="goal-status" id="goalStatus">—</p>
@@ -95,18 +118,28 @@
   <section class="stats">
     <div class="stat">
       <div class="stat-label">Dziś</div>
-      <div class="stat-val" id="statToday">—</div>
+      <div class="stat-val num" id="statToday">—</div>
       <div class="stat-note" id="statTodayNote"></div>
     </div>
     <div class="stat">
-      <div class="stat-label">Ostatnie 3 dni</div>
-      <div class="stat-val" id="stat3">—</div>
-      <div class="stat-note" id="stat3Note"></div>
+      <div class="stat-label">Ostatnie 7 dni</div>
+      <div class="stat-val num" id="stat7">—</div>
+      <div class="stat-note" id="stat7Note"></div>
     </div>
     <div class="stat">
-      <div class="stat-label">Ostatnie 7 dni</div>
-      <div class="stat-val" id="stat7">—</div>
-      <div class="stat-note"></div>
+      <div class="stat-label">Seria</div>
+      <div class="stat-val num" id="statStreak">—</div>
+      <div class="stat-note" id="statStreakNote"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Skuteczność</div>
+      <div class="stat-val num" id="statWinrate">—</div>
+      <div class="stat-note" id="statWinrateNote"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Najlepszy dzień</div>
+      <div class="stat-val num up" id="statBest">—</div>
+      <div class="stat-note" id="statBestNote"></div>
     </div>
   </section>
 
@@ -126,9 +159,36 @@
   <hr class="rule">
 
   <section class="panel">
+    <div class="panel-title">
+      <span>Kalendarz wyników — ostatnie 5 tygodni</span>
+      <div class="heat-legend">
+        strata <span class="cell" style="background:var(--bad)"></span><span class="cell" style="background:rgba(209,104,90,0.42)"></span><span class="cell" style="background:var(--line-soft)"></span><span class="cell" style="background:rgba(111,174,124,0.42)"></span><span class="cell" style="background:var(--good)"></span> zysk
+      </div>
+    </div>
+    <div class="heatmap" id="heatmap"></div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="panel">
+    <div class="panel-title">Wynik wg rynku</div>
+    <div class="table-scroll">
+      <table class="data-table" id="marketStatsTable">
+        <thead><tr><th>Rynek</th><th>Transakcje</th><th>Skuteczność</th><th>Wynik łączny</th></tr></thead>
+        <tbody id="marketStatsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <section class="panel">
     <div class="history-head">
       <div class="panel-title" style="margin-bottom:0">Historia wpisów</div>
-      <button class="undo" id="undoBtn" onclick="undoLast()">Cofnij ostatni</button>
+      <div class="history-actions">
+        <button class="undo" id="exportBtn" onclick="exportCsv()">Eksport CSV</button>
+        <button class="undo" id="undoBtn" onclick="undoLast()">Cofnij ostatni</button>
+      </div>
     </div>
     <div id="historyList"><div style="font-size:13px;color:var(--ink-faint);padding:30px 0;text-align:center">Brak wpisów.</div></div>
   </section>
@@ -136,8 +196,8 @@
 </main>
 
 <script>
-  const fmt = n => (n >= 0 ? '' : '-') + Math.abs(n).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '$';
-  const fmtSigned = n => (n > 0 ? '+' : '') + fmt(n);
+  const fmt = n => LYS.fmt(n);
+  const fmtSigned = n => LYS.fmtSigned(n);
 
   let state = { startingCapital: 0, currentCapital: 0, entries: [] };
   let capChart, plChart;
@@ -162,7 +222,8 @@
 
   function render() {
     const cap = state.currentCapital;
-    document.getElementById('capValue').textContent = fmt(cap);
+    document.getElementById('capValue').childNodes[0].textContent = fmt(cap) + ' ';
+    renderSpark();
 
     const diff = cap - state.startingCapital;
     const pct = state.startingCapital ? (diff / state.startingCapital * 100) : 0;
@@ -196,20 +257,147 @@
       for (let i = 0; i < daysBack; i++) keys.add(daysAgoKey(i));
       return state.entries.filter(e => e.type === 'trade' && keys.has(localDay(e.date))).reduce((s, e) => s + e.amount, 0);
     }
-    setStat('statToday', 'statTodayNote', todayPL, todayTrades.length);
-    const keys3 = new Set([daysAgoKey(0), daysAgoKey(1), daysAgoKey(2)]);
-    setStat('stat3', 'stat3Note', sumSince(3), state.entries.filter(e => e.type === 'trade' && keys3.has(localDay(e.date))).length);
-    setStat('stat7', null, sumSince(7), null);
+    setStat('statToday', 'statTodayNote', todayPL, todayTrades.length + ' transakcji');
+    const keys7 = new Set(); for (let i = 0; i < 7; i++) keys7.add(daysAgoKey(i));
+    setStat('stat7', 'stat7Note', sumSince(7), state.entries.filter(e => e.type === 'trade' && keys7.has(localDay(e.date))).length + ' transakcji');
 
+    renderStreak();
+    renderWinrate();
+    renderBestDay();
     renderHistory();
     renderCharts();
+    renderHeatmap();
+    renderMarketStats();
   }
 
-  function setStat(valId, noteId, val, count) {
+  function renderMarketStats() {
+    const trades = state.entries.filter(e => e.type === 'trade');
+    const groups = {};
+    trades.forEach(e => {
+      const key = e.market && e.market.trim() ? e.market.trim() : '— bez tagu —';
+      if (!groups[key]) groups[key] = { count: 0, wins: 0, sum: 0 };
+      groups[key].count++;
+      if (e.amount > 0) groups[key].wins++;
+      groups[key].sum += e.amount;
+    });
+    const body = document.getElementById('marketStatsBody');
+    const keys = Object.keys(groups).sort((a, b) => groups[b].sum - groups[a].sum);
+    if (keys.length === 0) {
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--ink-faint)">Brak transakcji z tagiem rynku — dodawaj go przy zapisie.</td></tr>';
+      return;
+    }
+    body.innerHTML = keys.map(k => {
+      const g = groups[k];
+      const wr = g.count ? Math.round((g.wins / g.count) * 100) : 0;
+      return `<tr>
+        <td class="hl">${escapeHtml(k)}</td>
+        <td>${g.count}</td>
+        <td>${wr}%</td>
+        <td class="num ${g.sum >= 0 ? 'up' : 'down'}">${fmtSigned(g.sum)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function setStat(valId, noteId, val, note) {
     const el = document.getElementById(valId);
     el.textContent = fmtSigned(val);
-    el.className = 'stat-val ' + (val > 0 ? 'up' : (val < 0 ? 'down' : 'flat'));
-    if (noteId && count !== null) document.getElementById(noteId).textContent = count + ' transakcji';
+    el.className = 'stat-val num ' + (val > 0 ? 'up' : (val < 0 ? 'down' : 'flat'));
+    if (noteId) document.getElementById(noteId).textContent = note;
+  }
+
+  // ---------- dzienne sumy P/L, posortowane rosnąco po dacie ----------
+  function dailyPLMap() {
+    const map = {};
+    state.entries.filter(e => e.type === 'trade').forEach(e => {
+      const k = localDay(e.date);
+      map[k] = (map[k] || 0) + e.amount;
+    });
+    return map;
+  }
+
+  function renderStreak() {
+    const map = dailyPLMap();
+    let i = 0, streak = 0, sign = 0;
+    // cofamy się dzień po dniu od dziś, licząc tylko dni z jakimikolwiek transakcjami
+    while (i < 400) {
+      const k = daysAgoKey(i);
+      if (!(k in map) || map[k] === 0) { if (i === 0) { i++; continue; } break; }
+      const s = map[k] > 0 ? 1 : -1;
+      if (sign === 0) sign = s;
+      if (s !== sign) break;
+      streak++; i++;
+    }
+    const el = document.getElementById('statStreak');
+    const note = document.getElementById('statStreakNote');
+    if (streak === 0) {
+      el.textContent = '—'; el.className = 'stat-val num flat'; note.textContent = 'brak danych';
+    } else {
+      el.textContent = streak + (streak === 1 ? ' dzień' : ' dni');
+      el.className = 'stat-val num ' + (sign > 0 ? 'up' : 'down');
+      note.textContent = sign > 0 ? 'z rzędu na plusie' : 'z rzędu na minusie';
+    }
+  }
+
+  function renderWinrate() {
+    const trades = state.entries.filter(e => e.type === 'trade');
+    const wins = trades.filter(e => e.amount > 0).length;
+    const el = document.getElementById('statWinrate');
+    const note = document.getElementById('statWinrateNote');
+    if (trades.length === 0) { el.textContent = '—'; el.className = 'stat-val num flat'; note.textContent = 'brak transakcji'; return; }
+    const pct = (wins / trades.length) * 100;
+    el.textContent = pct.toFixed(0) + '%';
+    el.className = 'stat-val num ' + (pct >= 50 ? 'up' : 'down');
+    note.textContent = wins + ' z ' + trades.length + ' na plusie';
+  }
+
+  function renderBestDay() {
+    const map = dailyPLMap();
+    const keys = Object.keys(map);
+    const el = document.getElementById('statBest');
+    const note = document.getElementById('statBestNote');
+    if (keys.length === 0) { el.textContent = '—'; note.textContent = ''; return; }
+    let bestKey = keys[0];
+    keys.forEach(k => { if (map[k] > map[bestKey]) bestKey = k; });
+    el.textContent = fmtSigned(map[bestKey]);
+    note.textContent = new Date(bestKey).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function renderHeatmap() {
+    const map = dailyPLMap();
+    const days = 35;
+    const vals = [];
+    for (let i = days - 1; i >= 0; i--) { const k = daysAgoKey(i); vals.push({ k, v: map[k] || 0 }); }
+    const maxAbs = Math.max(1, ...vals.map(x => Math.abs(x.v)));
+    const el = document.getElementById('heatmap');
+    el.innerHTML = vals.map(x => {
+      let level = 0;
+      if (x.v !== 0) {
+        const ratio = Math.abs(x.v) / maxAbs;
+        const step = ratio > 0.66 ? 3 : (ratio > 0.33 ? 2 : 1);
+        level = x.v > 0 ? step : -step;
+      }
+      const d = new Date(x.k);
+      const label = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
+      const tip = label + ': ' + (x.v === 0 ? 'brak wpisów' : fmtSigned(x.v));
+      return `<div class="cell" data-level="${level}" data-tip="${tip}"></div>`;
+    }).join('');
+  }
+
+  function renderSpark() {
+    const svg = document.getElementById('capSpark');
+    const points = [state.startingCapital].concat(state.entries.map(e => e.balanceAfter)).slice(-20);
+    if (points.length < 2) { svg.innerHTML = ''; return; }
+    const w = 90, h = 30, pad = 3;
+    const min = Math.min(...points), max = Math.max(...points);
+    const range = (max - min) || 1;
+    const stepX = (w - pad * 2) / (points.length - 1);
+    const path = points.map((p, i) => {
+      const x = pad + i * stepX;
+      const y = h - pad - ((p - min) / range) * (h - pad * 2);
+      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    const rising = points[points.length - 1] >= points[0];
+    svg.innerHTML = `<path d="${path}" fill="none" stroke="${rising ? '#6fae7c' : '#d1685a'}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
 
   function renderHistory() {
@@ -221,10 +409,11 @@
       const d = new Date(e.date);
       const dateStr = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
       const label = e.note ? escapeHtml(e.note) : (e.type === 'trade' ? 'transakcja' : 'dopłata kapitału');
+      const marketTag = e.market ? `<span class="tag">[${escapeHtml(e.market)}]</span> ` : '';
       return `<div class="entry">
         <div class="when">${dateStr}</div>
-        <div class="what">${label} <span class="tag">${e.type === 'trade' ? '' : '— wpłata'}</span></div>
-        <div class="amt ${e.amount >= 0 ? 'up' : 'down'}">${fmtSigned(e.amount)}</div>
+        <div class="what">${marketTag}${label} <span class="tag">${e.type === 'trade' ? '' : '— wpłata'}</span></div>
+        <div class="amt num ${e.amount >= 0 ? 'up' : 'down'}">${fmtSigned(e.amount)}</div>
       </div>`;
     }).join('');
   }
@@ -242,8 +431,8 @@
         labels: points.map(p => p.label),
         datasets: [{
           data: points.map(p => p.y),
-          borderColor: '#c8953c',
-          backgroundColor: 'rgba(200,149,60,0.08)',
+          borderColor: '#d1a24a',
+          backgroundColor: 'rgba(209,162,74,0.08)',
           fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2
         }]
       },
@@ -251,8 +440,8 @@
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
         scales: {
-          x: { ticks: { color: 'rgba(244,239,228,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } },
-          y: { ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } }
+          x: { ticks: { color: 'rgba(242,239,230,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } },
+          y: { ticks: { color: 'rgba(242,239,230,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } }
         }
       }
     });
@@ -269,13 +458,13 @@
     if (plChart) plChart.destroy();
     plChart = new Chart(plCtx, {
       type: 'bar',
-      data: { labels, datasets: [{ data: vals, backgroundColor: vals.map(v => v >= 0 ? '#74a06d' : '#c1584a'), borderRadius: 3 }] },
+      data: { labels, datasets: [{ data: vals, backgroundColor: vals.map(v => v >= 0 ? '#6fae7c' : '#d1685a'), borderRadius: 3 }] },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
         scales: {
-          x: { ticks: { color: 'rgba(244,239,228,0.3)', font: { family: 'Inter' } }, grid: { display: false } },
-          y: { ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } }
+          x: { ticks: { color: 'rgba(242,239,230,0.3)', font: { family: 'Inter' } }, grid: { display: false } },
+          y: { ticks: { color: 'rgba(242,239,230,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } }
         }
       }
     });
@@ -284,16 +473,36 @@
   async function undoLast() {
     if (state.entries.length === 0) return;
     const last = state.entries[state.entries.length - 1];
-    if (!confirm('Cofnąć ostatni wpis: ' + fmtSigned(last.amount) + '?')) return;
+    const ok = await LYS.confirmModal('Cofnąć ostatni wpis: ' + fmtSigned(last.amount) + '?', 'Cofnij');
+    if (!ok) return;
     try {
       const res = await fetch('/api/capital/entry/' + last.id, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Błąd');
       state = data;
       render();
-    } catch (e) { alert(e.message); }
+      LYS.toast('Wpis cofnięty', 'ok');
+    } catch (e) { LYS.toast(e.message, 'err'); }
   }
 
+  function exportCsv() {
+    if (state.entries.length === 0) { LYS.toast('Brak wpisów do eksportu', 'err'); return; }
+    const rows = [['data', 'typ', 'kwota_pln', 'saldo_po_pln', 'notatka']];
+    state.entries.forEach(e => {
+      rows.push([e.date, e.type, e.amount.toFixed(2), e.balanceAfter.toFixed(2), (e.note || '').replace(/"/g, "'")]);
+    });
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'lecimyszacunek-historia.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    LYS.toast('Wyeksportowano CSV', 'ok');
+  }
+
+  LYS.renderCurrencySwitcher(document.getElementById('curSwitch'), () => render());
+  LYS.renderMarketPanel(document.getElementById('marketPanel'));
   loadState();
 </script>
 </body>

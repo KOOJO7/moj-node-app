@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0c0b09">
+<meta name="theme-color" content="#070f0e">
 <title>Wejście — lecimyszacunek.pl</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,14 +14,14 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0c0b09;
-    --ink: #f4efe4;
-    --ink-dim: #9c9486;
-    --ink-faint: #5b5548;
-    --line: rgba(244,239,228,0.11);
-    --gold: #c8953c;
-    --gold-dim: rgba(200,149,60,0.14);
-    --bad: #c1584a;
+    --bg: #070f0e;
+    --ink: #f2efe6;
+    --ink-dim: #93a39d;
+    --ink-faint: #4d5c57;
+    --line: rgba(242,239,230,0.11);
+    --gold: #d1a24a;
+    --gold-bright: #e6bd6a;
+    --bad: #d1685a;
     --serif: 'Fraunces', Georgia, serif;
     --sans: 'Inter', -apple-system, sans-serif;
   }
@@ -30,7 +30,10 @@
 
   body {
     min-height: 100vh;
-    background: var(--bg);
+    background:
+      radial-gradient(1100px 620px at 12% -6%, rgba(63,143,138,0.14), transparent 58%),
+      radial-gradient(900px 700px at 105% 12%, rgba(209,162,74,0.08), transparent 55%),
+      var(--bg);
     color: var(--ink);
     font-family: var(--sans);
     font-size: 15px;
@@ -42,17 +45,15 @@
     overflow-x: hidden;
   }
 
-  .ember {
-    position: fixed;
-    top: 38%;
-    left: 50%;
-    width: 640px;
-    height: 640px;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(200,149,60,0.10) 0%, rgba(200,149,60,0.03) 45%, transparent 72%);
-    pointer-events: none;
-    z-index: 0;
+  /* powolna, jedna, orkiestrowana animacja tła — "przypływ" o zmroku */
+  .tide {
+    position: fixed; inset: -20% -20% auto -20%; height: 140%;
+    background: radial-gradient(closest-side, rgba(63,143,138,0.10), transparent 70%);
+    transform: translateY(0);
+    animation: tide-drift 18s ease-in-out infinite alternate;
+    pointer-events: none; z-index: 0;
   }
+  @keyframes tide-drift { from { transform: translateY(-2%); } to { transform: translateY(2%); } }
 
   .mark {
     position: fixed;
@@ -71,7 +72,8 @@
   .mark .chip {
     width: 7px; height: 7px;
     background: var(--gold);
-    border-radius: 1.5px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px 1px rgba(209,162,74,0.55);
     flex-shrink: 0;
   }
 
@@ -95,10 +97,7 @@
     line-height: 1.15;
     letter-spacing: -0.01em;
     margin-bottom: 14px;
-  }
-  h1 em {
-    font-style: italic;
-    color: var(--gold);
+    color: var(--gold-bright);
   }
 
   .sub {
@@ -144,8 +143,8 @@
     width: 100%;
     padding: 13px 18px;
     border: none;
-    border-radius: 3px;
-    background: var(--gold);
+    border-radius: 8px;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
     color: #201603;
     font-family: var(--sans);
     font-size: 14.5px;
@@ -174,19 +173,19 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
+    * { transition: none !important; animation: none !important; }
   }
 </style>
 </head>
 <body>
 
-<div class="ember" aria-hidden="true"></div>
+<div class="tide" aria-hidden="true"></div>
 
 <a href="/" class="mark"><span class="chip"></span>lecimyszacunek</a>
 
 <main>
   <p class="kicker">Panel prywatny</p>
-  <h1>Wpisz klucz,<br>żeby <em>wejść</em>.</h1>
+  <h1>Wpisz klucz,<br>żeby <span style="color:var(--ink)">wejść</span>.</h1>
   <p class="sub">Kapitał, cel dzienny i historia transakcji czekają za tym jednym polem.</p>
 
   <form id="loginForm" onsubmit="event.preventDefault(); login();">
@@ -203,7 +202,9 @@
   async function login() {
     const passInput = document.getElementById('pass');
     const errorEl = document.getElementById('error');
+    const btn = document.querySelector('button.enter');
     const pass = passInput.value;
+    btn.disabled = true;
     try {
       const res = await fetch('/login', {
         method: 'POST',
@@ -220,6 +221,8 @@
       passInput.value = '';
       passInput.focus();
       setTimeout(() => errorEl.classList.remove('show'), 3000);
+    } finally {
+      btn.disabled = false;
     }
   }
 </script>

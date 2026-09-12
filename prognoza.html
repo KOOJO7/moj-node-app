@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0c0b09">
+<meta name="theme-color" content="#070f0e">
 <title>Prognoza — lecimyszacunek.pl</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="app.js"></script>
 <style>
   .intro { font-size: 13.5px; color: var(--ink-dim); line-height: 1.65; max-width: 62ch; margin-bottom: 4px; }
 
@@ -23,18 +24,32 @@
   .checkline input { accent-color: var(--gold); width: 15px; height: 15px; }
 
   .result-hero { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin: 26px 0 6px; }
-  .result-value { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 6vw, 50px); letter-spacing: -0.015em; line-height: 1.1; color: var(--gold); word-break: break-word; }
+  .result-value { font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 6vw, 50px); letter-spacing: -0.015em; line-height: 1.1; color: var(--gold-bright); word-break: break-word; }
   .result-meta { text-align: right; font-size: 13px; color: var(--ink-dim); line-height: 1.6; }
 
   .result-line { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 22px; }
   .result-line b { color: var(--ink); font-weight: 500; }
 
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); margin: 24px 0; }
+  .summary-grid .stat { padding: 4px 18px; border-left: 1px solid var(--line); }
+  .summary-grid .stat:first-child { padding-left: 0; border-left: none; }
+  .stat-label { font-size: 12px; color: var(--ink-faint); margin-bottom: 8px; }
+  .stat-val { font-family: var(--serif); font-size: 21px; font-weight: 500; }
+
   .chart-box { position: relative; height: 240px; }
+
+  .table-head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+  .table-toggle { font-size: 12px; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: all 0.15s; }
+  .table-toggle:hover { color: var(--ink); border-color: var(--ink-faint); }
 
   @media (max-width: 760px) {
     .setup { grid-template-columns: 1fr; }
     .result-hero { flex-direction: column; align-items: flex-start; gap: 6px; }
     .result-meta { text-align: left; }
+    .summary-grid { grid-template-columns: 1fr 1fr; row-gap: 18px; }
+    .summary-grid .stat:nth-child(2) { border-left: none; }
+    .summary-grid .stat:nth-child(3) { padding-left: 0; border-left: none; border-top: 1px solid var(--line); padding-top: 14px; }
+    .summary-grid .stat:nth-child(4) { border-top: 1px solid var(--line); padding-top: 14px; }
   }
 </style>
 </head>
@@ -46,14 +61,17 @@
     <a href="/panel">Panel</a>
     <a href="/zapis">Zapis</a>
     <a href="/prognoza" class="active">Prognoza</a>
-    <a href="/logout" class="signout">Wyloguj</a>
   </nav>
+  <div class="top-right">
+    <div class="cur-switch" id="curSwitch"></div>
+    <a href="/logout" class="signout" style="text-decoration:none;font-size:13px">Wyloguj</a>
+  </div>
 </header>
 
 <main>
 
   <section>
-    <p class="intro">Procent składany — jeśli codziennie w dni robocze zarabiasz stałe X% kapitału, ile z tego wychodzi po dłuższym czasie. Ustaw punkt startowy i horyzont, reszta liczy się sama.</p>
+    <p class="intro">Kalkulator procentu składanego — jeśli w każdy dzień roboczy zarabiasz stały procent kapitału, ile z tego wyjdzie po dłuższym czasie. Sobota i niedziela domyślnie się nie liczą. Ustaw punkt startowy i horyzont, reszta liczy się sama.</p>
   </section>
 
   <hr class="rule">
@@ -63,15 +81,15 @@
 
     <div class="setup">
       <div class="g">
-        <label class="f-label" for="startCap">Kapitał startowy</label>
+        <label class="f-label" for="startCap">Kapitał początkowy (PLN)</label>
         <input class="field" type="number" step="0.01" id="startCap" placeholder="np. 29.18">
       </div>
       <div class="g">
-        <label class="f-label" for="dailyRate">Wzrost dzienny (%)</label>
+        <label class="f-label" for="dailyRate">Dzienny procent zysku (%)</label>
         <input class="field" type="number" step="0.1" min="-99.9" id="dailyRate" value="5">
       </div>
       <div class="g">
-        <label class="f-label">Horyzont</label>
+        <label class="f-label">Okres</label>
         <div class="period-row">
           <input class="field" type="number" min="1" id="periodAmount" value="30">
           <select class="field" id="periodUnit">
@@ -86,51 +104,66 @@
 
     <div class="chips" id="presetChips"></div>
 
-    <label class="checkline"><input type="checkbox" id="skipWeekends" checked> Pomijaj soboty i niedziele</label>
+    <label class="checkline"><input type="checkbox" id="skipWeekends" checked> Pomijaj soboty i niedziele (liczą się tylko dni robocze)</label>
   </section>
 
   <div class="result-hero">
     <div>
-      <p class="hero-label">Przewidywany kapitał</p>
-      <div class="result-value" id="resultValue">—</div>
+      <p class="hero-label">Kapitał końcowy</p>
+      <div class="result-value num" id="resultValue">—</div>
     </div>
     <div class="result-meta" id="resultMeta">—</div>
   </div>
   <p class="result-line" id="resultLine">—</p>
+
+  <section class="summary-grid">
+    <div class="stat">
+      <div class="stat-label">Kapitał początkowy</div>
+      <div class="stat-val num" id="sumStart">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Dzienny procent</div>
+      <div class="stat-val num" id="sumRate">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Dni robocze</div>
+      <div class="stat-val num" id="sumDays">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Łączny zysk</div>
+      <div class="stat-val num up" id="sumProfit">—</div>
+    </div>
+  </section>
 
   <div class="panel">
     <div class="panel-title">Krzywa wzrostu</div>
     <div class="chart-box"><canvas id="growthChart"></canvas></div>
   </div>
 
+  <hr class="rule">
+
+  <div class="panel">
+    <div class="table-head-row">
+      <div class="panel-title" style="margin-bottom:0">Kapitał dzień po dniu</div>
+      <button class="table-toggle" id="tableToggle" onclick="toggleTableMode()">Pokaż wszystkie dni</button>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr><th>Dzień</th><th>Data</th><th>Kapitał</th><th>Zysk dnia</th><th>Zysk łączny</th></tr>
+        </thead>
+        <tbody id="growthTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </main>
 
 <script>
-  // Formatowanie z separatorem tysięcy — przy takim wzroście liczby robią się
-  // szybko ogromne, a bez separatora łatwo błędnie odczytać rząd wielkości.
-  // Duże liczby (a przy 5%/dzień robią się ogromne bardzo szybko) czyta się
-  // dużo łatwiej jako "12,4 mln$" niż jako surowa notacja naukowa — dopiero
-  // poza sensownym zakresem jednostek wracamy do zapisu ×10^n.
-  const BIG_UNITS = [
-    { v: 1e18, s: 'trl' },
-    { v: 1e15, s: 'bld' },
-    { v: 1e12, s: 'bln' },
-    { v: 1e9,  s: 'mld' },
-    { v: 1e6,  s: 'mln' },
-  ];
-  const fmt = n => {
-    if (!isFinite(n)) return '—';
-    const sign = n < 0 ? '-' : '';
-    const abs = Math.abs(n);
-    if (abs >= 1e21) return sign + abs.toExponential(2).replace('+', '') + '$';
-    for (const u of BIG_UNITS) {
-      if (abs >= u.v) {
-        return sign + (abs / u.v).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + u.s + '$';
-      }
-    }
-    return sign + abs.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '$';
-  };
+  const fmt = n => LYS.fmt(n);
   let growthChart;
+  let lastTradingDays = [], lastStartCap = 0, lastRate = 0;
+  let tableShowAll = false;
 
   const PRESETS = [
     { label: '7 dni', amount: 7, unit: 'dni' },
@@ -154,10 +187,9 @@
     if (unit === 'dni') { d.setDate(d.getDate() + amount); return d; }
     if (unit === 'tygodnie') { d.setDate(d.getDate() + amount * 7); return d; }
     // Miesiące i lata liczone naiwnie (setMonth/setFullYear) potrafią "przeskoczyć":
-    // 31 stycznia + 1 miesiąc daje w JS 3 marca zamiast końca lutego, bo luty ma
-    // mniej dni i silnik dolicza nadmiar do kolejnego miesiąca. Dlatego liczymy
-    // docelowy miesiąc/rok osobno i doklejamy dzień z przycięciem do realnej
-    // długości tego miesiąca.
+    // 31 stycznia + 1 miesiąc daje w JS 3 marca zamiast końca lutego. Dlatego liczymy
+    // docelowy miesiąc/rok osobno i doklejamy dzień z przycięciem do realnej długości
+    // tego miesiąca.
     if (unit === 'miesiace') {
       const day = d.getDate();
       d.setDate(1);
@@ -197,8 +229,7 @@
   function compute() {
     const startCap = Math.max(0, parseFloat(document.getElementById('startCap').value) || 0);
     // Stawka poniżej -100% dziennie nie ma sensu (kapitał nie może spaść poniżej
-    // zera i "odbić" na minus) — bez tego ograniczenia (1+stawka) mogło wyjść
-    // ujemne i wzór zaczynał mnożyć przez naprzemienne plusy/minusy.
+    // zera i "odbić" na minus) — ograniczamy, żeby (1+stawka) nie wyszło ujemne.
     const rateInput = parseFloat(document.getElementById('dailyRate').value);
     const rate = Math.max(isNaN(rateInput) ? 0 : rateInput, -99.9) / 100;
     const amount = Math.max(1, parseInt(document.getElementById('periodAmount').value) || 1);
@@ -211,16 +242,26 @@
     const n = tradingDays.length;
 
     const finalValue = startCap * Math.pow(1 + rate, n);
+    const totalProfit = finalValue - startCap;
     const growthPct = startCap > 0 ? ((finalValue / startCap) - 1) * 100 : 0;
 
     document.getElementById('resultValue').textContent = fmt(finalValue);
     document.getElementById('resultMeta').innerHTML =
-      `${n} sesji${skipWeekends ? ' roboczych' : ''}<br>do ${endDate.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+      `${n} dni${skipWeekends ? ' roboczych' : ''}<br>do ${endDate.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
     const multiplierStr = startCap > 0 ? 'x' + (finalValue / startCap).toFixed(2) : '—';
     document.getElementById('resultLine').innerHTML =
       `Start: <b>${fmt(startCap)}</b> · wzrost: <b>${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(0)}%</b> · mnożnik: <b>${multiplierStr}</b> · wzór: kapitał × ${(1 + rate).toFixed(3)}<sup>${n}</sup>`;
 
+    document.getElementById('sumStart').textContent = fmt(startCap);
+    document.getElementById('sumRate').textContent = (rate * 100).toFixed(2) + '%';
+    document.getElementById('sumDays').textContent = n;
+    const profitEl = document.getElementById('sumProfit');
+    profitEl.textContent = (totalProfit >= 0 ? '+' : '') + fmt(totalProfit);
+    profitEl.className = 'stat-val num ' + (totalProfit >= 0 ? 'up' : 'down');
+
+    lastTradingDays = tradingDays; lastStartCap = startCap; lastRate = rate;
     renderChart(startCap, rate, tradingDays);
+    renderTable(startCap, rate, tradingDays);
   }
 
   function renderChart(startCap, rate, tradingDays) {
@@ -250,8 +291,8 @@
         labels,
         datasets: [{
           data: values,
-          borderColor: '#c8953c',
-          backgroundColor: 'rgba(200,149,60,0.08)',
+          borderColor: '#d1a24a',
+          backgroundColor: 'rgba(209,162,74,0.08)',
           fill: true, tension: 0.2, pointRadius: 0, borderWidth: 2
         }]
       },
@@ -259,15 +300,55 @@
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
         scales: {
-          x: { ticks: { color: 'rgba(244,239,228,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } },
+          x: { ticks: { color: 'rgba(242,239,230,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } },
           y: {
             type: (n > 250 && canUseLog) ? 'logarithmic' : 'linear',
-            ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } },
-            grid: { color: 'rgba(244,239,228,0.05)' }
+            ticks: { color: 'rgba(242,239,230,0.3)', callback: v => fmt(v), font: { family: 'Inter' } },
+            grid: { color: 'rgba(242,239,230,0.05)' }
           }
         }
       }
     });
+  }
+
+  function toggleTableMode() {
+    tableShowAll = !tableShowAll;
+    document.getElementById('tableToggle').textContent = tableShowAll ? 'Pokaż skrócone' : 'Pokaż wszystkie dni';
+    renderTable(lastStartCap, lastRate, lastTradingDays);
+  }
+
+  function renderTable(startCap, rate, tradingDays) {
+    const n = tradingDays.length;
+    const body = document.getElementById('growthTableBody');
+    if (n === 0) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-faint)">Brak dni w wybranym okresie.</td></tr>'; return; }
+
+    // Pełna tabela dnia po dniu potrafi mieć tysiące wierszy przy horyzoncie
+    // liczonym w latach — domyślnie pokazujemy skrócony widok (maks. ~60 wierszy,
+    // zawsze z pierwszym i ostatnim dniem), a pełną listę tylko na żądanie.
+    const maxRows = 60;
+    const step = (tableShowAll || n <= maxRows) ? 1 : Math.ceil(n / maxRows);
+
+    let rows = [];
+    let prevCap = startCap;
+    for (let i = step; i <= n; i += step) {
+      const cap = startCap * Math.pow(1 + rate, i);
+      rows.push({ i, date: tradingDays[i - 1], cap, dayGain: cap - prevCap, totalGain: cap - startCap });
+      prevCap = cap;
+    }
+    if (rows.length === 0 || rows[rows.length - 1].i !== n) {
+      const cap = startCap * Math.pow(1 + rate, n);
+      rows.push({ i: n, date: tradingDays[n - 1], cap, dayGain: cap - (rows.length ? rows[rows.length - 1].cap : startCap), totalGain: cap - startCap });
+    }
+
+    body.innerHTML = [
+      `<tr><td>0</td><td>dziś</td><td class="hl num">${fmt(startCap)}</td><td class="num">—</td><td class="num">—</td></tr>`
+    ].concat(rows.map(r => `<tr>
+        <td>${r.i}</td>
+        <td>${r.date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
+        <td class="hl num">${fmt(r.cap)}</td>
+        <td class="num ${r.dayGain >= 0 ? 'up' : 'down'}">${(r.dayGain >= 0 ? '+' : '') + fmt(r.dayGain)}</td>
+        <td class="num ${r.totalGain >= 0 ? 'up' : 'down'}">${(r.totalGain >= 0 ? '+' : '') + fmt(r.totalGain)}</td>
+      </tr>`)).join('');
   }
 
   ['startCap', 'dailyRate', 'periodAmount', 'periodUnit', 'skipWeekends'].forEach(id => {
@@ -290,6 +371,7 @@
     compute();
   }
 
+  LYS.renderCurrencySwitcher(document.getElementById('curSwitch'), () => compute());
   init();
 </script>
 </body>

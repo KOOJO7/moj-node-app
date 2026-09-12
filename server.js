@@ -63,7 +63,7 @@ function requireAuthApi(req, res, next) {
 }
 
 // Tylko te dwa pliki są publiczne — reszta idzie przez jawne, chronione trasy
-const PUBLIC_FILES = new Set(['/style.css', '/icon.png']);
+const PUBLIC_FILES = new Set(['/style.css', '/icon.png', '/app.js']);
 app.use((req, res, next) => {
     if (req.method === 'GET' && PUBLIC_FILES.has(req.path)) {
         return res.sendFile(path.join(__dirname, req.path));
@@ -150,7 +150,7 @@ app.get('/api/capital', requireAuthApi, (req, res) => {
 });
 
 app.post('/api/capital/entry', requireAuthApi, (req, res) => {
-    const { type, amount, note } = req.body;
+    const { type, amount, note, market } = req.body;
     if (!['trade', 'deposit'].includes(type)) {
         return res.status(400).json({ error: 'Zły typ wpisu' });
     }
@@ -160,6 +160,9 @@ app.post('/api/capital/entry', requireAuthApi, (req, res) => {
     }
     if (note && String(note).length > 200) {
         return res.status(400).json({ error: 'Notatka za długa' });
+    }
+    if (market && String(market).length > 24) {
+        return res.status(400).json({ error: 'Nazwa rynku za długa' });
     }
 
     const data = loadCapital();
@@ -171,6 +174,7 @@ app.post('/api/capital/entry', requireAuthApi, (req, res) => {
         type,
         amount: amt,
         note: (note || '').toString().trim(),
+        market: (market || '').toString().trim().slice(0, 24),
         balanceAfter: data.currentCapital
     };
     data.entries.push(entry);
