@@ -10,75 +10,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0c0b09;
-    --panel: #131110;
-    --ink: #f4efe4;
-    --ink-dim: #9c9486;
-    --ink-faint: #5b5548;
-    --line: rgba(244,239,228,0.10);
-    --line-soft: rgba(244,239,228,0.06);
-    --gold: #c8953c;
-    --gold-dim: rgba(200,149,60,0.14);
-    --good: #74a06d;
-    --good-dim: rgba(116,160,109,0.14);
-    --bad: #c1584a;
-    --bad-dim: rgba(193,88,74,0.14);
-    --serif: 'Fraunces', Georgia, serif;
-    --sans: 'Inter', -apple-system, sans-serif;
-  }
-
-  html { color-scheme: dark; }
-
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 14.5px;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-  }
-
-  a { color: inherit; }
-
-  /* ---------- header ---------- */
-  header.top {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 40px;
-    background: rgba(12,11,9,0.86);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-size: 13.5px; color: var(--ink); }
-  .brand .chip { width: 7px; height: 7px; background: var(--gold); border-radius: 1.5px; flex-shrink: 0; }
-  .top-links { display: flex; align-items: center; gap: 22px; font-size: 13px; color: var(--ink-dim); }
-  .top-links a { text-decoration: none; transition: color 0.15s; }
-  .top-links a:hover { color: var(--ink); }
-  .top-links .signout { color: var(--bad); }
-
-  main { max-width: 860px; margin: 0 auto; padding: 48px 24px 90px; }
-
-  .rule { height: 1px; background: var(--line); margin: 36px 0; border: none; }
-
-  /* ---------- hero: kapitał ---------- */
-  .hero-label { font-size: 13px; color: var(--ink-dim); margin-bottom: 10px; }
-  .hero-value {
-    font-family: var(--serif);
-    font-weight: 500;
-    font-size: clamp(42px, 8vw, 66px);
-    letter-spacing: -0.015em;
-    line-height: 1;
-  }
-  .hero-delta { margin-top: 12px; font-size: 14px; color: var(--ink-dim); }
-  .hero-delta .up { color: var(--good); }
-  .hero-delta .down { color: var(--bad); }
-
-  /* ---------- cel dzienny ---------- */
   .goal-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
   .goal-title { font-size: 14.5px; color: var(--ink); }
   .goal-title span { color: var(--ink-faint); font-size: 13px; }
@@ -91,7 +25,6 @@
   .goal-status.hit { color: var(--good); }
   .goal-status.under { color: var(--bad); }
 
-  /* ---------- stats ---------- */
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); }
   .stat { padding: 4px 22px; border-left: 1px solid var(--line); }
   .stat:first-child { padding-left: 0; border-left: none; }
@@ -102,63 +35,9 @@
   .stat-val.flat { color: var(--ink-faint); }
   .stat-note { font-size: 12px; color: var(--ink-faint); margin-top: 5px; }
 
-  /* ---------- panels (charts / actions / history) ---------- */
-  .panel {
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: var(--panel);
-    padding: 22px;
-  }
-  .panel-title { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 16px; }
-
   .charts { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
   .chart-box { position: relative; height: 200px; }
 
-  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-  .actions p.hint { font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; margin-bottom: 16px; }
-
-  .toggle { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
-  .toggle button {
-    flex: 1; padding: 9px; background: transparent; border: none;
-    color: var(--ink-dim); font-family: var(--sans); font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: background 0.15s, color 0.15s;
-  }
-  .toggle button.on.win { background: var(--good-dim); color: var(--good); }
-  .toggle button.on.loss { background: var(--bad-dim); color: var(--bad); }
-
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-  .chip-btn {
-    padding: 6px 12px; border-radius: 5px; border: 1px solid var(--line);
-    background: transparent; color: var(--ink-dim); font-family: var(--sans); font-size: 12px;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .chip-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
-
-  .row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
-  input.field, input.field-note {
-    width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
-    color: var(--ink); padding: 10px 12px; font-family: var(--sans); font-size: 14px;
-    outline: none; transition: border-color 0.15s;
-  }
-  input.field:focus, input.field-note:focus { border-color: var(--gold); }
-  input.field::placeholder, input.field-note::placeholder { color: var(--ink-faint); }
-
-  .btn {
-    padding: 10px 16px; border-radius: 6px; border: none;
-    font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer;
-    white-space: nowrap; transition: filter 0.15s, transform 0.1s;
-  }
-  .btn:active { transform: scale(0.98); }
-  .btn.gold { background: var(--gold); color: #201603; }
-  .btn.gold:hover { filter: brightness(1.08); }
-  .btn.ghost { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); }
-  .btn.ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
-
-  .feedback { font-size: 12.5px; height: 16px; margin-top: 6px; }
-  .feedback.ok { color: var(--good); }
-  .feedback.err { color: var(--bad); }
-
-  /* ---------- history ---------- */
   .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .undo { font-size: 12.5px; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: all 0.15s; }
   .undo:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-faint); }
@@ -170,23 +49,13 @@
   .entry .what { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .entry .what .tag { color: var(--ink-faint); }
   .entry .amt { font-family: var(--serif); font-weight: 500; text-align: right; }
-  .entry .amt.up { color: var(--good); }
-  .entry .amt.down { color: var(--bad); }
-  .empty { font-size: 13px; color: var(--ink-faint); padding: 30px 0; text-align: center; }
 
   @media (max-width: 760px) {
-    header.top { padding: 16px 20px; }
-    .top-links { gap: 16px; }
-    main { padding: 34px 18px 70px; }
-    .charts, .actions { grid-template-columns: 1fr; }
+    .charts { grid-template-columns: 1fr; }
     .stats { grid-template-columns: 1fr; gap: 18px; }
     .stat { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 16px; }
     .stat:first-child { border-top: none; padding-top: 4px; }
     .entry { grid-template-columns: 60px 1fr auto; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
   }
 </style>
 </head>
@@ -195,24 +64,23 @@
 <header class="top">
   <a href="/home" class="brand"><span class="chip"></span>lecimyszacunek</a>
   <nav class="top-links">
-    <a href="/page3">Sklep</a>
-    <a href="/kontakt">Kontakt</a>
+    <a href="/panel" class="active">Panel</a>
+    <a href="/zapis">Zapis</a>
+    <a href="/prognoza">Prognoza</a>
     <a href="/logout" class="signout">Wyloguj</a>
   </nav>
 </header>
 
 <main>
 
-  <!-- KAPITAŁ -->
   <section>
     <p class="hero-label">Kapitał obecny</p>
     <div class="hero-value" id="capValue">—</div>
-    <p class="hero-delta" id="capDelta">ładowanie danych…</p>
+    <p class="hero-delta" id="capDelta" style="margin-top:12px;font-size:14px;color:var(--ink-dim)">ładowanie danych…</p>
   </section>
 
   <hr class="rule">
 
-  <!-- CEL DZIENNY -->
   <section>
     <div class="goal-top">
       <div class="goal-title">Cel na dziś <span>— 5% kapitału</span></div>
@@ -224,7 +92,6 @@
 
   <hr class="rule">
 
-  <!-- STATY -->
   <section class="stats">
     <div class="stat">
       <div class="stat-label">Dziś</div>
@@ -245,7 +112,6 @@
 
   <hr class="rule">
 
-  <!-- WYKRESY -->
   <section class="charts">
     <div class="panel">
       <div class="panel-title">Kapitał w czasie</div>
@@ -257,44 +123,14 @@
     </div>
   </section>
 
-  <!-- AKCJE -->
-  <section class="actions">
-    <div class="panel">
-      <div class="panel-title">Zapisz transakcję</div>
-      <div class="toggle">
-        <button type="button" class="on win" id="btnWin" onclick="setMode('win')">Zysk</button>
-        <button type="button" id="btnLoss" onclick="setMode('loss')">Strata</button>
-      </div>
-      <div class="chips" id="tradeChips"></div>
-      <div class="row2">
-        <input class="field" type="number" step="0.01" min="0" id="tradeAmount" placeholder="Kwota, np. 3.50">
-        <button class="btn gold" onclick="submitTrade()">Zapisz</button>
-      </div>
-      <input class="field-note" type="text" id="tradeNote" placeholder="Notatka — para, setup (opcjonalnie)">
-      <p class="feedback" id="tradeFb"></p>
-    </div>
-
-    <div class="panel">
-      <div class="panel-title">Dopłata kapitału</div>
-      <p class="hint">Poza tradingiem — np. dorzucasz 5$ z boku. Dolicza się do kapitału, ale nie liczy się jako wynik.</p>
-      <div class="chips" id="depositChips"></div>
-      <div class="row2">
-        <input class="field" type="number" step="0.01" id="depositAmount" placeholder="Kwota (ujemna = wypłata)">
-        <button class="btn ghost" onclick="submitDeposit()">Dopłać</button>
-      </div>
-      <p class="feedback" id="depositFb"></p>
-    </div>
-  </section>
-
   <hr class="rule">
 
-  <!-- HISTORIA -->
   <section class="panel">
     <div class="history-head">
       <div class="panel-title" style="margin-bottom:0">Historia wpisów</div>
       <button class="undo" id="undoBtn" onclick="undoLast()">Cofnij ostatni</button>
     </div>
-    <div id="historyList"><div class="empty">Brak wpisów.</div></div>
+    <div id="historyList"><div style="font-size:13px;color:var(--ink-faint);padding:30px 0;text-align:center">Brak wpisów.</div></div>
   </section>
 
 </main>
@@ -304,25 +140,7 @@
   const fmtSigned = n => (n > 0 ? '+' : '') + fmt(n);
 
   let state = { startingCapital: 0, currentCapital: 0, entries: [] };
-  let mode = 'win';
   let capChart, plChart;
-
-  const QUICK_TRADE = [1, 2, 3, 5, 10];
-  const QUICK_DEPOSIT = [5, 10, 20, 50];
-
-  document.getElementById('tradeChips').innerHTML = QUICK_TRADE
-    .map(v => `<button type="button" class="chip-btn" onclick="fillTrade(${v})">${v}$</button>`).join('');
-  document.getElementById('depositChips').innerHTML = QUICK_DEPOSIT
-    .map(v => `<button type="button" class="chip-btn" onclick="fillDeposit(${v})">${v}$</button>`).join('');
-
-  function fillTrade(v) { document.getElementById('tradeAmount').value = v; }
-  function fillDeposit(v) { document.getElementById('depositAmount').value = v; }
-
-  function setMode(m) {
-    mode = m;
-    document.getElementById('btnWin').classList.toggle('on', m === 'win');
-    document.getElementById('btnLoss').classList.toggle('on', m === 'loss');
-  }
 
   function localDay(iso) {
     const d = new Date(iso);
@@ -398,7 +216,7 @@
     const list = document.getElementById('historyList');
     const entries = [...state.entries].reverse().slice(0, 60);
     document.getElementById('undoBtn').disabled = state.entries.length === 0;
-    if (entries.length === 0) { list.innerHTML = '<div class="empty">Brak wpisów.</div>'; return; }
+    if (entries.length === 0) { list.innerHTML = '<div style="font-size:13px;color:var(--ink-faint);padding:30px 0;text-align:center">Brak wpisów.</div>'; return; }
     list.innerHTML = entries.map(e => {
       const d = new Date(e.date);
       const dateStr = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
@@ -461,42 +279,6 @@
         }
       }
     });
-  }
-
-  async function submitTrade() {
-    const fb = document.getElementById('tradeFb');
-    const raw = parseFloat(document.getElementById('tradeAmount').value);
-    if (isNaN(raw) || raw <= 0) { fb.textContent = 'Podaj kwotę większą od 0'; fb.className = 'feedback err'; return; }
-    const amount = mode === 'win' ? raw : -raw;
-    const note = document.getElementById('tradeNote').value;
-    await postEntry('trade', amount, note, fb);
-    document.getElementById('tradeAmount').value = '';
-    document.getElementById('tradeNote').value = '';
-  }
-
-  async function submitDeposit() {
-    const fb = document.getElementById('depositFb');
-    const amount = parseFloat(document.getElementById('depositAmount').value);
-    if (isNaN(amount) || amount === 0) { fb.textContent = 'Podaj niezerową kwotę'; fb.className = 'feedback err'; return; }
-    await postEntry('deposit', amount, '', fb);
-    document.getElementById('depositAmount').value = '';
-  }
-
-  async function postEntry(type, amount, note, fb) {
-    try {
-      const res = await fetch('/api/capital/entry', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, amount, note })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Błąd');
-      state = data;
-      render();
-      fb.textContent = 'Zapisano'; fb.className = 'feedback ok';
-      setTimeout(() => { fb.textContent = ''; fb.className = 'feedback'; }, 2500);
-    } catch (e) {
-      fb.textContent = e.message; fb.className = 'feedback err';
-    }
   }
 
   async function undoLast() {
