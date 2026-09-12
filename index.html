@@ -1,196 +1,226 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#000000">
-  <title>Autoryzacja — lecimyszacunek.pl</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #000; --surface: #0a0a0a; --surface2: #111;
-      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
-      --text: #fff; --muted: rgba(255,255,255,0.5); --dim: rgba(255,255,255,0.25);
-      --green: #22c55e; --red: #f87171;
-      --nav-w: 240px; --font: 'Inter', -apple-system, sans-serif;
-    }
-    html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
-    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; display: flex; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0c0b09">
+<title>Wejście — lecimyszacunek.pl</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --bg: #0c0b09;
+    --ink: #f4efe4;
+    --ink-dim: #9c9486;
+    --ink-faint: #5b5548;
+    --line: rgba(244,239,228,0.11);
+    --gold: #c8953c;
+    --gold-dim: rgba(200,149,60,0.14);
+    --bad: #c1584a;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
 
-    /* ── RESEND-STYLE GLOW ── */
-    .glow-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .glow-a {
-      position: absolute;
-      bottom: -80px; left: 50%; transform: translateX(-50%);
-      width: 900px; height: 450px; border-radius: 50%;
-      background: radial-gradient(ellipse at center, rgba(34,197,94,0.12) 0%, rgba(34,197,94,0.05) 45%, transparent 70%);
-      filter: blur(35px);
-    }
-    .glow-b {
-      position: absolute;
-      bottom: 40px; left: 50%;
-      transform: translateX(-50%) rotate(-5deg);
-      width: 130vw; height: 120px;
-      background: linear-gradient(90deg, transparent 8%, rgba(34,197,94,0.05) 30%, rgba(140,140,140,0.1) 50%, rgba(34,197,94,0.05) 70%, transparent 92%);
-      filter: blur(16px);
-    }
-    .glow-c {
-      position: absolute;
-      width: 700px; height: 700px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(34,197,94,0.035) 0%, transparent 65%);
-      transform: translate(-50%, -50%);
-      left: 50%; top: 40%;
-      transition: left 0.9s ease, top 0.9s ease;
-      filter: blur(1px);
-    }
+  html { color-scheme: dark; }
 
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    position: relative;
+    overflow-x: hidden;
+  }
 
-    /* ── SIDEBAR ── */
-    nav { width: var(--nav-w); min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
-    .nav-top { padding: 20px; border-bottom: 1px solid var(--border); }
-    .nav-brand { font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
-    .nav-brand .dot { width: 8px; height: 8px; background: #fff; border-radius: 2px; flex-shrink: 0; }
-    .nav-links { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 1px; }
-    .nav-link { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 13px; transition: all 0.15s; }
-    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
-    .nav-link.active { color: var(--text); background: rgba(255,255,255,0.08); }
-    .nav-link svg { flex-shrink: 0; opacity: 0.6; }
-    .nav-link.active svg { opacity: 1; }
-    .nav-bottom { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+  .ember {
+    position: fixed;
+    top: 38%;
+    left: 50%;
+    width: 640px;
+    height: 640px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(200,149,60,0.10) 0%, rgba(200,149,60,0.03) 45%, transparent 72%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
+  .mark {
+    position: fixed;
+    top: 28px;
+    left: 32px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    color: var(--ink-dim);
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    z-index: 2;
+  }
+  .mark:hover { color: var(--ink); }
+  .mark .chip {
+    width: 7px; height: 7px;
+    background: var(--gold);
+    border-radius: 1.5px;
+    flex-shrink: 0;
+  }
 
-    /* ── TOPBAR mobile ── */
-    .topbar {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; height: 52px;
-      background: #0a0a0a;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      z-index: 300;
-      align-items: center;
-      padding: 0 16px; gap: 12px;
-    }
-    .topbar-brand { font-size: 13px; font-weight: 600; color: #fff; flex: 1; }
-    .hamburger { background: none; border: none; color: #fff; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 6px; }
+  main {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 380px;
+  }
 
-    /* ── DRAWER ── */
-    .drawer {
-      display: none;
-      position: fixed;
-      top: 52px; left: 0; right: 0;
-      background: #111;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      z-index: 299;
-      flex-direction: column;
-      transform: translateY(-110%);
-      transition: transform 0.25s ease;
-      pointer-events: none;
-    }
-    .drawer.open { transform: translateY(0); pointer-events: all; }
-    .drawer .nav-link { padding: 14px 20px; border-radius: 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 14px; color: rgba(255,255,255,0.75); }
-    .drawer .nav-link.active { color: #fff; }
-    .drawer .nav-link:last-child { border-bottom: none; }
-    .drawer-overlay { display: none; position: fixed; inset: 0; top: 52px; background: rgba(0,0,0,0.65); z-index: 298; pointer-events: none; }
-    .drawer-overlay.open { pointer-events: all; }
+  .kicker {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-bottom: 22px;
+  }
 
-    main { margin-left: var(--nav-w); flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px; min-height: 100vh; position: relative; z-index: 1; }
-    .login-wrap { width: 100%; max-width: 380px; }
-    .login-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; margin-bottom: 24px; }
-    .login-eyebrow .pulse { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; flex-shrink: 0; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-    .login-label { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
-    .login-title { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .login-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; line-height: 1.6; }
-    .field { margin-bottom: 12px; }
-    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .field input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 14px; font-family: var(--font); font-size: 14px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
-    .field input:focus { border-color: rgba(34,197,94,0.4); }
-    .field input::placeholder { color: var(--dim); }
-    .btn-primary { width: 100%; padding: 10px 16px; background: #fff; color: #000; border: none; border-radius: 8px; font-family: var(--font); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; margin-top: 4px; }
-    .btn-primary:hover { background: rgba(255,255,255,0.9); }
-    .btn-primary:active { transform: scale(0.99); }
-    .error-msg { font-size: 12px; color: #f87171; margin-top: 10px; display: none; }
-    .divider-line { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
-    .divider-line::before, .divider-line::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .divider-line span { font-size: 12px; color: var(--dim); }
-    @media (max-width: 768px) {
-      nav { display: none; }
-      .topbar { display: flex; }
-      .drawer { display: flex; }
-      .drawer-overlay { display: block; }
-      main { margin-left: 0; padding: 72px 24px 40px; align-items: flex-start; }
-      .glow-b { display: none; }
-    }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 34px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 14px;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
 
-    @media (max-width: 768px) {
-      body { background: #111 !important; }
-    }
+  .sub {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.65;
+    margin-bottom: 40px;
+    max-width: 34ch;
+  }
 
-  </style>
+  form { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+
+  .field-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    transition: border-color 0.2s ease;
+  }
+  .field-row:focus-within { border-color: var(--gold); }
+
+  input[type="password"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 20px;
+    letter-spacing: 0.14em;
+    padding: 6px 0 2px;
+  }
+  input[type="password"]::placeholder { color: var(--ink-faint); letter-spacing: 0.14em; }
+
+  button.enter {
+    margin-top: 28px;
+    width: 100%;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 3px;
+    background: var(--gold);
+    color: #201603;
+    font-family: var(--sans);
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+  }
+  button.enter:hover { filter: brightness(1.08); }
+  button.enter:active { transform: scale(0.99); }
+  button.enter:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  .error {
+    font-size: 13px;
+    color: var(--bad);
+    margin-top: 14px;
+    min-height: 1em;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .error.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 480px) {
+    .mark { top: 20px; left: 20px; }
+    h1 { font-size: 29px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
 </head>
 <body>
-<div class="glow-wrap">
-  <div class="glow-a"></div>
-  <div class="glow-b"></div>
-  <div class="glow-c" id="glowC"></div>
-</div>
 
-<nav>
-  <div class="nav-top"><a href="/home" class="nav-brand"><div class="dot"></div> lecimyszacunek.pl</a></div>
-  <div class="nav-links">
-    <a href="/home" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Główna</a>
-    <a href="/" class="nav-link active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8.3l-4.5 4.5-3.2-3.2L3.5 17.1"/></svg>Panel</a>
-    <a href="/page3" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>Sklep</a>
-    <a href="/kontakt" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Kontakt</a>
-  </div>
-  <div class="nav-bottom">v1.0 · panel prywatny · 2026</div>
-</nav>
+<div class="ember" aria-hidden="true"></div>
 
-<div class="topbar">
-  <span class="topbar-brand">lecimyszacunek.pl</span>
-  <button class="hamburger" onclick="toggleDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-</div>
-<div class="drawer" id="drawer">
-  <a href="/home"    class="nav-link"    onclick="closeDrawer()">Główna</a>
-  <a href="/"        class="nav-link active"     onclick="closeDrawer()">Panel</a>
-  <a href="/page3"   class="nav-link"   onclick="closeDrawer()">Sklep</a>
-  <a href="/kontakt" class="nav-link" onclick="closeDrawer()">Kontakt</a>
-</div>
-<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
+<a href="/home" class="mark"><span class="chip"></span>lecimyszacunek</a>
+
 <main>
-  <div class="login-wrap">
-    <div class="login-eyebrow"><div class="pulse"></div>Dostęp chroniony</div>
-    <div class="login-label">lecimyszacunek.pl / panel</div>
-    <h1 class="login-title">Autoryzacja</h1>
-    <p class="login-sub">Podaj klucz dostępu żeby wejść do panelu — kapitał, cel dzienny i statystyki tradingowe.</p>
-    <div class="divider-line"><span>klucz dostępu</span></div>
-    <div class="field">
-      <label>Access key</label>
-      <input type="password" id="pass" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')login()">
+  <p class="kicker">Panel prywatny</p>
+  <h1>Wpisz klucz,<br>żeby <em>wejść</em>.</h1>
+  <p class="sub">Kapitał, cel dzienny i historia transakcji czekają za tym jednym polem.</p>
+
+  <form id="loginForm" onsubmit="event.preventDefault(); login();">
+    <label for="pass">Klucz dostępu</label>
+    <div class="field-row">
+      <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password" autofocus>
     </div>
-    <button class="btn-primary" onclick="login()">Wejdź do panelu →</button>
-    <div id="error" class="error-msg">✗ Nieprawidłowy klucz dostępu</div>
-  </div>
+    <button type="submit" class="enter">Zaloguj</button>
+    <p class="error" id="error">Zły klucz — spróbuj jeszcze raz.</p>
+  </form>
 </main>
+
 <script>
-
-  function toggleDrawer() { document.getElementById('drawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
-  function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
-
-
-  // Mouse glow
-  const _gc = document.getElementById('glowC');
-  if (_gc) document.addEventListener('mousemove', e => { _gc.style.left = e.clientX + 'px'; _gc.style.top = e.clientY + 'px'; });
-
   async function login() {
-    const pass = document.getElementById('pass').value;
-    const res = await fetch('/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pass }) });
-    if (res.ok) { window.location.href = '/panel'; }
-    else { const e = document.getElementById('error'); e.style.display = 'block'; document.getElementById('pass').value = ''; document.getElementById('pass').focus(); setTimeout(() => { e.style.display = 'none'; }, 3000); }
+    const passInput = document.getElementById('pass');
+    const errorEl = document.getElementById('error');
+    const pass = passInput.value;
+    try {
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pass })
+      });
+      if (res.ok) {
+        window.location.href = '/panel';
+        return;
+      }
+      throw new Error();
+    } catch (e) {
+      errorEl.classList.add('show');
+      passInput.value = '';
+      passInput.focus();
+      setTimeout(() => errorEl.classList.remove('show'), 3000);
+    }
   }
 </script>
 </body>
