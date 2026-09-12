@@ -199,6 +199,125 @@ app.delete('/api/capital/entry/:id', requireAuthApi, (req, res) => {
     res.json(data);
 });
 
+// ─── RYNKI ──────────────────────────────────────────────────
+// Kursy pobierane przez serwer Render, a nie bezpośrednio z przeglądarki.
+
+const MARKET_SYMBOLS = {
+    US500: '^spx',
+    SPX500: '^spx',
+    SP500: '^spx',
+
+    NAS100: '^ndx',
+    NASDAQ: '^ndx',
+    USTEC: '^ndx',
+
+    DAX: '^dax',
+    DE40: '^dax',
+    GER40: '^dax',
+
+    US30: '^dji',
+    DJ30: '^dji',
+
+    UK100: '^ftse',
+    FTSE100: '^ftse',
+
+    WIG20: '^wig20'
+};
+
+const MARKET_CACHE_MS = 60 * 1000;
+const marketCache = new Map();
+
+async function getMarketQuote(code) {
+    code = String(code || '')
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 12);
+
+    if (!code) {
+        throw new Error('Brak symbolu rynku');
+    }
+
+    const cached = marketCache.get(code);
+
+    if (cached && Date.now() - cached.time < MARKET_CACHE_MS) {
+        return cached;
+    }
+
+    const symbol = MARKET_SYMBOLS[code] || code.toLowerCase();
+
+    const url =
+        'https://stooq.com/q/l/?s=' +
+        encodeURIComponent(symbol) +
+        '&f=sd2t2ohlc&h&e=csv';
+
+    const response = await fetch(url, {
+        headers: {
+            'User-Agent': 'lecimyszacunek/1.0'
+        },
+        signal: AbortSignal.timeout(8000)
+    });
+
+    if (!response.ok) {
+        throw new Error(`Stooq HTTP ${response.status}`);
+    }
+
+    const text = await response.text();
+
+    const lines = text
+        .trim()
+        .split(/\r?\n/)
+        .filter(Boolean);
+
+    if (lines.length < 2) {
+        throw new Error('Stooq zwrócił pustą odpowiedź');
+    }
+
+    const cols = lines[1].split(',');
+
+    // Format:
+    // Symbol,Date,Time,Open,High,Low,Close
+    const price = Number.parseFloat(cols[6]);
+
+    if (!Number.isFinite(price) || price <= 0) {
+        throw new Error('Brak poprawnej ceny dla ' + code);
+    }
+
+    const data = {
+        code,
+        symbol,
+        price,
+        time: Date.now(),
+        source: 'stooq'
+    };
+
+    marketCache.set(code, data);
+
+    return data;
+}
+
+// GET /api/market/US500
+app.get('/api/market/:code', requireAuthApi, async (req, res) => {
+    try {
+        const data = await getMarketQuote(req.params.code);
+
+        res.json({
+            ok: true,
+            ...data
+        });
+    } catch (err) {
+        console.error(
+            `Błąd pobierania rynku ${req.params.code}:`,
+            err.message
+        );
+
+        res.status(502).json({
+            ok: false,
+            error: 'Nie udało się pobrać notowania rynku'
+        });
+    }
+});
+
 // ─── STRONY ────────────────────────────────────────────────
 app.get('/', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
