@@ -68,7 +68,7 @@
       </div>
       <div class="g">
         <label class="f-label" for="dailyRate">Wzrost dzienny (%)</label>
-        <input class="field" type="number" step="0.1" id="dailyRate" value="5">
+        <input class="field" type="number" step="0.1" min="-99.9" id="dailyRate" value="5">
       </div>
       <div class="g">
         <label class="f-label">Horyzont</label>
@@ -108,11 +108,26 @@
 <script>
   // Formatowanie z separatorem tysięcy — przy takim wzroście liczby robią się
   // szybko ogromne, a bez separatora łatwo błędnie odczytać rząd wielkości.
+  // Duże liczby (a przy 5%/dzień robią się ogromne bardzo szybko) czyta się
+  // dużo łatwiej jako "12,4 mln$" niż jako surowa notacja naukowa — dopiero
+  // poza sensownym zakresem jednostek wracamy do zapisu ×10^n.
+  const BIG_UNITS = [
+    { v: 1e18, s: 'trl' },
+    { v: 1e15, s: 'bld' },
+    { v: 1e12, s: 'bln' },
+    { v: 1e9,  s: 'mld' },
+    { v: 1e6,  s: 'mln' },
+  ];
   const fmt = n => {
     if (!isFinite(n)) return '—';
     const sign = n < 0 ? '-' : '';
     const abs = Math.abs(n);
-    if (abs >= 1e12) return sign + abs.toExponential(2).replace('+', '') + '$';
+    if (abs >= 1e21) return sign + abs.toExponential(2).replace('+', '') + '$';
+    for (const u of BIG_UNITS) {
+      if (abs >= u.v) {
+        return sign + (abs / u.v).toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + u.s + '$';
+      }
+    }
     return sign + abs.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '$';
   };
   let growthChart;
@@ -136,10 +151,31 @@
 
   function addPeriod(date, amount, unit) {
     const d = new Date(date);
-    if (unit === 'dni') d.setDate(d.getDate() + amount);
-    else if (unit === 'tygodnie') d.setDate(d.getDate() + amount * 7);
-    else if (unit === 'miesiace') d.setMonth(d.getMonth() + amount);
-    else if (unit === 'lata') d.setFullYear(d.getFullYear() + amount);
+    if (unit === 'dni') { d.setDate(d.getDate() + amount); return d; }
+    if (unit === 'tygodnie') { d.setDate(d.getDate() + amount * 7); return d; }
+    // Miesiące i lata liczone naiwnie (setMonth/setFullYear) potrafią "przeskoczyć":
+    // 31 stycznia + 1 miesiąc daje w JS 3 marca zamiast końca lutego, bo luty ma
+    // mniej dni i silnik dolicza nadmiar do kolejnego miesiąca. Dlatego liczymy
+    // docelowy miesiąc/rok osobno i doklejamy dzień z przycięciem do realnej
+    // długości tego miesiąca.
+    if (unit === 'miesiace') {
+      const day = d.getDate();
+      d.setDate(1);
+      d.setMonth(d.getMonth() + amount);
+      const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(day, lastDay));
+      return d;
+    }
+    if (unit === 'lata') {
+      const day = d.getDate();
+      const month = d.getMonth();
+      d.setDate(1);
+      d.setFullYear(d.getFullYear() + amount);
+      const lastDay = new Date(d.getFullYear(), month + 1, 0).getDate();
+      d.setMonth(month);
+      d.setDate(Math.min(day, lastDay));
+      return d;
+    }
     return d;
   }
 
@@ -159,8 +195,12 @@
   }
 
   function compute() {
-    const startCap = parseFloat(document.getElementById('startCap').value) || 0;
-    const rate = (parseFloat(document.getElementById('dailyRate').value) || 0) / 100;
+    const startCap = Math.max(0, parseFloat(document.getElementById('startCap').value) || 0);
+    // Stawka poniżej -100% dziennie nie ma sensu (kapitał nie może spaść poniżej
+    // zera i "odbić" na minus) — bez tego ograniczenia (1+stawka) mogło wyjść
+    // ujemne i wzór zaczynał mnożyć przez naprzemienne plusy/minusy.
+    const rateInput = parseFloat(document.getElementById('dailyRate').value);
+    const rate = Math.max(isNaN(rateInput) ? 0 : rateInput, -99.9) / 100;
     const amount = Math.max(1, parseInt(document.getElementById('periodAmount').value) || 1);
     const unit = document.getElementById('periodUnit').value;
     const skipWeekends = document.getElementById('skipWeekends').checked;
@@ -176,8 +216,9 @@
     document.getElementById('resultValue').textContent = fmt(finalValue);
     document.getElementById('resultMeta').innerHTML =
       `${n} sesji${skipWeekends ? ' roboczych' : ''}<br>do ${endDate.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+    const multiplierStr = startCap > 0 ? 'x' + (finalValue / startCap).toFixed(2) : '—';
     document.getElementById('resultLine').innerHTML =
-      `Start: <b>${fmt(startCap)}</b> · wzrost: <b>${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(0)}%</b> · mnożnik: <b>x${(finalValue / (startCap || 1)).toFixed(2)}</b> · wzór: kapitał × 1.05<sup>${n}</sup>`;
+      `Start: <b>${fmt(startCap)}</b> · wzrost: <b>${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(0)}%</b> · mnożnik: <b>${multiplierStr}</b> · wzór: kapitał × ${(1 + rate).toFixed(3)}<sup>${n}</sup>`;
 
     renderChart(startCap, rate, tradingDays);
   }
@@ -196,6 +237,10 @@
       values.push(startCap * Math.pow(1 + rate, n));
       labels.push(tradingDays[n - 1].toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }));
     }
+
+    // Skala logarytmiczna nie istnieje dla zera ani liczb ujemnych — przy
+    // kapitale startowym 0 (puste pole) Chart.js po prostu ucinał wykres.
+    const canUseLog = values.every(v => v > 0);
 
     const ctx = document.getElementById('growthChart');
     if (growthChart) growthChart.destroy();
@@ -216,7 +261,7 @@
         scales: {
           x: { ticks: { color: 'rgba(244,239,228,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } },
           y: {
-            type: n > 250 ? 'logarithmic' : 'linear',
+            type: (n > 250 && canUseLog) ? 'logarithmic' : 'linear',
             ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } },
             grid: { color: 'rgba(244,239,228,0.05)' }
           }
