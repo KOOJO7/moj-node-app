@@ -1,478 +1,515 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#000000">
-  <title>Panel — lecimyszacunek.pl</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #000; --surface: #0a0a0a; --surface2: #111;
-      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
-      --text: #fff; --muted: rgba(255,255,255,0.5); --dim: rgba(255,255,255,0.25);
-      --green: #22c55e; --red: #f87171; --amber: #fbbf24;
-      --nav-w: 240px; --font: 'Inter', -apple-system, sans-serif;
-    }
-    html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
-    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; display: flex; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0c0b09">
+<title>Panel — lecimyszacunek.pl</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── NAV ── */
-    nav { width: var(--nav-w); min-height: 100vh; position: fixed; top: 0; left: 0; bottom: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; }
-    .nav-top { padding: 20px; border-bottom: 1px solid var(--border); }
-    .nav-brand { font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; display: flex; align-items: center; gap: 8px; }
-    .nav-brand .dot { width: 8px; height: 8px; background: #fff; border-radius: 2px; flex-shrink: 0; }
-    .nav-links { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 1px; }
-    .nav-link { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 13px; transition: all 0.15s; background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: var(--font); }
-    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
-    .nav-link.active { color: var(--text); background: rgba(255,255,255,0.08); }
-    .nav-link svg { flex-shrink: 0; opacity: 0.6; }
-    .nav-link.active svg { opacity: 1; }
-    .nav-bottom { padding: 16px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+  :root {
+    --bg: #0c0b09;
+    --panel: #131110;
+    --ink: #f4efe4;
+    --ink-dim: #9c9486;
+    --ink-faint: #5b5548;
+    --line: rgba(244,239,228,0.10);
+    --line-soft: rgba(244,239,228,0.06);
+    --gold: #c8953c;
+    --gold-dim: rgba(200,149,60,0.14);
+    --good: #74a06d;
+    --good-dim: rgba(116,160,109,0.14);
+    --bad: #c1584a;
+    --bad-dim: rgba(193,88,74,0.14);
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
 
-    .topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 52px; background: #0a0a0a; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 300; align-items: center; padding: 0 16px; gap: 12px; }
-    .topbar-brand { font-size: 13px; font-weight: 600; color: #fff; flex: 1; }
-    .hamburger { background: none; border: none; color: #fff; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 6px; }
-    .drawer { display: none; position: fixed; top: 52px; left: 0; right: 0; background: #111; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 299; flex-direction: column; transform: translateY(-110%); transition: transform 0.25s ease; pointer-events: none; }
-    .drawer.open { transform: translateY(0); pointer-events: all; }
-    .drawer .nav-link { padding: 14px 20px; border-radius: 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 14px; color: rgba(255,255,255,0.75); }
-    .drawer .nav-link.active { color: #fff; }
-    .drawer .nav-link:last-child { border-bottom: none; }
-    .drawer-overlay { display: none; position: fixed; inset: 0; top: 52px; background: rgba(0,0,0,0.65); z-index: 298; pointer-events: none; }
-    .drawer-overlay.open { pointer-events: all; }
+  html { color-scheme: dark; }
 
-    main { margin-left: var(--nav-w); flex: 1; padding: 40px 48px 60px; min-height: 100vh; }
-    .wrap { max-width: 1080px; margin: 0 auto; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
 
-    .page-header { margin-bottom: 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-    .page-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .page-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
-    .live-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; }
-    .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  a { color: inherit; }
 
-    /* ── HERO: kapitał + cel ── */
-    .hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    .card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 22px; }
-    .card-eyebrow { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+  /* ---------- header ---------- */
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px;
+    background: rgba(12,11,9,0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-size: 13.5px; color: var(--ink); }
+  .brand .chip { width: 7px; height: 7px; background: var(--gold); border-radius: 1.5px; flex-shrink: 0; }
+  .top-links { display: flex; align-items: center; gap: 22px; font-size: 13px; color: var(--ink-dim); }
+  .top-links a { text-decoration: none; transition: color 0.15s; }
+  .top-links a:hover { color: var(--ink); }
+  .top-links .signout { color: var(--bad); }
 
-    .cap-value { font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; margin-bottom: 8px; }
-    .cap-sub { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-    .cap-sub .chg-pos { color: var(--green); } .cap-sub .chg-neg { color: var(--red); }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 24px 90px; }
 
-    .target-value { font-size: 34px; font-weight: 300; letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
-    .target-sub { font-size: 12px; color: var(--dim); margin-bottom: 16px; }
-    .progress-track { height: 8px; border-radius: 5px; background: rgba(255,255,255,0.06); overflow: hidden; margin-bottom: 10px; }
-    .progress-fill { height: 100%; border-radius: 5px; background: var(--green); transition: width 0.4s ease, background 0.4s ease; width: 0%; }
-    .progress-fill.over { background: #4ade80; }
-    .progress-fill.negative { background: var(--red); }
-    .target-status { font-size: 13px; font-weight: 500; }
-    .target-status.pos { color: var(--green); }
-    .target-status.neg { color: var(--red); }
+  .rule { height: 1px; background: var(--line); margin: 36px 0; border: none; }
 
-    /* ── STATS ROW ── */
-    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px; }
-    .stat-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 18px 20px; }
-    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
-    .stat-value { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; }
-    .stat-value.pos { color: var(--green); } .stat-value.neg { color: var(--red); } .stat-value.zero { color: var(--dim); }
-    .stat-note { font-size: 11px; color: var(--dim); margin-top: 6px; }
+  /* ---------- hero: kapitał ---------- */
+  .hero-label { font-size: 13px; color: var(--ink-dim); margin-bottom: 10px; }
+  .hero-value {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: clamp(42px, 8vw, 66px);
+    letter-spacing: -0.015em;
+    line-height: 1;
+  }
+  .hero-delta { margin-top: 12px; font-size: 14px; color: var(--ink-dim); }
+  .hero-delta .up { color: var(--good); }
+  .hero-delta .down { color: var(--bad); }
 
-    /* ── CHARTS ── */
-    .charts-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; margin-bottom: 14px; }
-    .chart-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 20px; }
-    .chart-title { font-size: 12px; color: var(--muted); margin-bottom: 14px; font-weight: 500; }
-    .chart-box { position: relative; height: 220px; }
-    .empty-note { font-size: 12px; color: var(--dim); text-align: center; padding: 60px 10px; }
+  /* ---------- cel dzienny ---------- */
+  .goal-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .goal-title { font-size: 14.5px; color: var(--ink); }
+  .goal-title span { color: var(--ink-faint); font-size: 13px; }
+  .goal-num { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--gold); }
+  .track { height: 6px; border-radius: 3px; background: var(--line-soft); overflow: hidden; margin-bottom: 12px; }
+  .fill { height: 100%; border-radius: 3px; background: var(--gold); width: 0%; transition: width 0.5s ease, background 0.3s ease; }
+  .fill.hit { background: var(--good); }
+  .fill.under { background: var(--bad); }
+  .goal-status { font-size: 13.5px; color: var(--ink-dim); }
+  .goal-status.hit { color: var(--good); }
+  .goal-status.under { color: var(--bad); }
 
-    /* ── ACTIONS ── */
-    .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    .action-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 20px; }
-    .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
-    .seg button { flex: 1; padding: 9px; background: transparent; border: none; color: var(--muted); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-    .seg button.active.win { background: rgba(34,197,94,0.12); color: var(--green); }
-    .seg button.active.loss { background: rgba(248,113,113,0.12); color: var(--red); }
-    .row-inline { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
-    .inp { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px 12px; font-family: var(--font); font-size: 14px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
-    .inp:focus { border-color: var(--border2); }
-    .inp::placeholder { color: var(--dim); }
-    .btn-submit { padding: 10px 18px; border-radius: 8px; border: none; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-    .btn-submit.trade { background: #fff; color: #000; }
-    .btn-submit.trade:hover { background: rgba(255,255,255,0.88); }
-    .btn-submit.deposit { background: rgba(96,165,250,0.15); color: #93c5fd; border: 1px solid rgba(96,165,250,0.3); }
-    .btn-submit.deposit:hover { background: rgba(96,165,250,0.22); }
-    .quick-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .q-chip { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font); font-size: 12px; cursor: pointer; transition: all 0.15s; }
-    .q-chip:hover { color: var(--text); border-color: var(--border2); }
-    .fb-msg { font-size: 12px; height: 16px; margin-top: 4px; }
-    .fb-msg.ok { color: var(--green); } .fb-msg.err { color: var(--red); }
+  /* ---------- stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .stat { padding: 4px 22px; border-left: 1px solid var(--line); }
+  .stat:first-child { padding-left: 0; border-left: none; }
+  .stat-label { font-size: 12.5px; color: var(--ink-faint); margin-bottom: 8px; }
+  .stat-val { font-family: var(--serif); font-size: 25px; font-weight: 500; }
+  .stat-val.up { color: var(--good); }
+  .stat-val.down { color: var(--bad); }
+  .stat-val.flat { color: var(--ink-faint); }
+  .stat-note { font-size: 12px; color: var(--ink-faint); margin-top: 5px; }
 
-    /* ── HISTORY ── */
-    .history-card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 20px; }
-    .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .undo-btn { font-size: 12px; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: all 0.15s; }
-    .undo-btn:hover { color: var(--text); border-color: var(--border2); }
-    .undo-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .hist-row { display: grid; grid-template-columns: 90px 1fr auto auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-    .hist-row:last-child { border-bottom: none; }
-    .hist-date { color: var(--dim); font-size: 11px; }
-    .hist-note { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .hist-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .hist-tag.trade { background: rgba(255,255,255,0.06); color: var(--muted); }
-    .hist-tag.deposit { background: rgba(96,165,250,0.12); color: #93c5fd; }
-    .hist-amount { font-weight: 500; text-align: right; min-width: 70px; }
-    .hist-amount.pos { color: var(--green); } .hist-amount.neg { color: var(--red); }
+  /* ---------- panels (charts / actions / history) ---------- */
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    padding: 22px;
+  }
+  .panel-title { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 16px; }
 
-    @media (max-width: 1024px) {
-      .hero-grid, .charts-row, .actions-grid { grid-template-columns: 1fr; }
-      .stats-row { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 768px) {
-      nav { display: none; }
-      .topbar { display: flex; }
-      .drawer { display: flex; }
-      .drawer-overlay { display: block; }
-      main { margin-left: 0; padding: 68px 16px 40px; }
-      body { background: #111 !important; }
-      .stats-row { grid-template-columns: 1fr; }
-      .hist-row { grid-template-columns: 70px 1fr auto; }
-      .hist-tag { display: none; }
-    }
-  </style>
+  .charts { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
+  .chart-box { position: relative; height: 200px; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .actions p.hint { font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; margin-bottom: 16px; }
+
+  .toggle { display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 14px; }
+  .toggle button {
+    flex: 1; padding: 9px; background: transparent; border: none;
+    color: var(--ink-dim); font-family: var(--sans); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .toggle button.on.win { background: var(--good-dim); color: var(--good); }
+  .toggle button.on.loss { background: var(--bad-dim); color: var(--bad); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip-btn {
+    padding: 6px 12px; border-radius: 5px; border: 1px solid var(--line);
+    background: transparent; color: var(--ink-dim); font-family: var(--sans); font-size: 12px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .chip-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+  .row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
+  input.field, input.field-note {
+    width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    color: var(--ink); padding: 10px 12px; font-family: var(--sans); font-size: 14px;
+    outline: none; transition: border-color 0.15s;
+  }
+  input.field:focus, input.field-note:focus { border-color: var(--gold); }
+  input.field::placeholder, input.field-note::placeholder { color: var(--ink-faint); }
+
+  .btn {
+    padding: 10px 16px; border-radius: 6px; border: none;
+    font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: filter 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.gold { background: var(--gold); color: #201603; }
+  .btn.gold:hover { filter: brightness(1.08); }
+  .btn.ghost { background: transparent; color: var(--ink-dim); border: 1px solid var(--line); }
+  .btn.ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+  .feedback { font-size: 12.5px; height: 16px; margin-top: 6px; }
+  .feedback.ok { color: var(--good); }
+  .feedback.err { color: var(--bad); }
+
+  /* ---------- history ---------- */
+  .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .undo { font-size: 12.5px; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: all 0.15s; }
+  .undo:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-faint); }
+  .undo:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .entry { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; }
+  .entry:last-child { border-bottom: none; }
+  .entry .when { color: var(--ink-faint); font-size: 12px; }
+  .entry .what { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entry .what .tag { color: var(--ink-faint); }
+  .entry .amt { font-family: var(--serif); font-weight: 500; text-align: right; }
+  .entry .amt.up { color: var(--good); }
+  .entry .amt.down { color: var(--bad); }
+  .empty { font-size: 13px; color: var(--ink-faint); padding: 30px 0; text-align: center; }
+
+  @media (max-width: 760px) {
+    header.top { padding: 16px 20px; }
+    .top-links { gap: 16px; }
+    main { padding: 34px 18px 70px; }
+    .charts, .actions { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr; gap: 18px; }
+    .stat { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 16px; }
+    .stat:first-child { border-top: none; padding-top: 4px; }
+    .entry { grid-template-columns: 60px 1fr auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-top"><a href="/home" class="nav-brand"><div class="dot"></div> lecimyszacunek.pl</a></div>
-  <div class="nav-links">
-    <a href="/panel" class="nav-link active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8.3l-4.5 4.5-3.2-3.2L3.5 17.1"/></svg>Panel</a>
-    <a href="/home" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Główna</a>
-    <a href="/logout" class="nav-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Wyloguj</a>
-  </div>
-  <div class="nav-bottom">v1.0 · panel prywatny · 2026</div>
-</nav>
-
-<div class="topbar">
-  <span class="topbar-brand">lecimyszacunek.pl / panel</span>
-  <button class="hamburger" onclick="toggleDrawer()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
-</div>
-<div class="drawer" id="drawer">
-  <a href="/panel" class="nav-link active" onclick="closeDrawer()">Panel</a>
-  <a href="/home" class="nav-link" onclick="closeDrawer()">Główna</a>
-  <a href="/logout" class="nav-link" onclick="closeDrawer()">Wyloguj</a>
-</div>
-<div class="drawer-overlay" id="overlay" onclick="closeDrawer()"></div>
+<header class="top">
+  <a href="/home" class="brand"><span class="chip"></span>lecimyszacunek</a>
+  <nav class="top-links">
+    <a href="/page3">Sklep</a>
+    <a href="/kontakt">Kontakt</a>
+    <a href="/logout" class="signout">Wyloguj</a>
+  </nav>
+</header>
 
 <main>
-  <div class="wrap">
-    <div class="page-header">
-      <div>
-        <div class="page-label">lecimyszacunek.pl / panel</div>
-        <h1 class="page-title">Panel tradingowy</h1>
+
+  <!-- KAPITAŁ -->
+  <section>
+    <p class="hero-label">Kapitał obecny</p>
+    <div class="hero-value" id="capValue">—</div>
+    <p class="hero-delta" id="capDelta">ładowanie danych…</p>
+  </section>
+
+  <hr class="rule">
+
+  <!-- CEL DZIENNY -->
+  <section>
+    <div class="goal-top">
+      <div class="goal-title">Cel na dziś <span>— 5% kapitału</span></div>
+      <div class="goal-num" id="goalNum">—</div>
+    </div>
+    <div class="track"><div class="fill" id="goalFill"></div></div>
+    <p class="goal-status" id="goalStatus">—</p>
+  </section>
+
+  <hr class="rule">
+
+  <!-- STATY -->
+  <section class="stats">
+    <div class="stat">
+      <div class="stat-label">Dziś</div>
+      <div class="stat-val" id="statToday">—</div>
+      <div class="stat-note" id="statTodayNote"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Ostatnie 3 dni</div>
+      <div class="stat-val" id="stat3">—</div>
+      <div class="stat-note" id="stat3Note"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Ostatnie 7 dni</div>
+      <div class="stat-val" id="stat7">—</div>
+      <div class="stat-note"></div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- WYKRESY -->
+  <section class="charts">
+    <div class="panel">
+      <div class="panel-title">Kapitał w czasie</div>
+      <div class="chart-box"><canvas id="capChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Wynik dzienny — ostatnie 14 dni</div>
+      <div class="chart-box"><canvas id="plChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- AKCJE -->
+  <section class="actions">
+    <div class="panel">
+      <div class="panel-title">Zapisz transakcję</div>
+      <div class="toggle">
+        <button type="button" class="on win" id="btnWin" onclick="setMode('win')">Zysk</button>
+        <button type="button" id="btnLoss" onclick="setMode('loss')">Strata</button>
       </div>
-      <div class="live-badge"><div class="live-dot"></div>Dane lokalne</div>
+      <div class="chips" id="tradeChips"></div>
+      <div class="row2">
+        <input class="field" type="number" step="0.01" min="0" id="tradeAmount" placeholder="Kwota, np. 3.50">
+        <button class="btn gold" onclick="submitTrade()">Zapisz</button>
+      </div>
+      <input class="field-note" type="text" id="tradeNote" placeholder="Notatka — para, setup (opcjonalnie)">
+      <p class="feedback" id="tradeFb"></p>
     </div>
 
-    <!-- KAPITAŁ + CEL -->
-    <div class="hero-grid">
-      <div class="card">
-        <div class="card-eyebrow">Kapitał całkowity</div>
-        <div class="cap-value" id="capValue">—</div>
-        <div class="cap-sub" id="capSub">ładowanie...</div>
+    <div class="panel">
+      <div class="panel-title">Dopłata kapitału</div>
+      <p class="hint">Poza tradingiem — np. dorzucasz 5$ z boku. Dolicza się do kapitału, ale nie liczy się jako wynik.</p>
+      <div class="chips" id="depositChips"></div>
+      <div class="row2">
+        <input class="field" type="number" step="0.01" id="depositAmount" placeholder="Kwota (ujemna = wypłata)">
+        <button class="btn ghost" onclick="submitDeposit()">Dopłać</button>
       </div>
-      <div class="card">
-        <div class="card-eyebrow">Cel dzienny (5% kapitału)</div>
-        <div class="target-value" id="targetValue">—</div>
-        <div class="target-sub" id="targetSub">5% z aktualnego kapitału</div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="target-status" id="targetStatus">—</div>
-      </div>
+      <p class="feedback" id="depositFb"></p>
     </div>
+  </section>
 
-    <!-- STATY -->
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-label">Dziś</div>
-        <div class="stat-value" id="statToday">—</div>
-        <div class="stat-note" id="statTodayNote">z transakcji</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Ostatnie 3 dni</div>
-        <div class="stat-value" id="stat3d">—</div>
-        <div class="stat-note" id="stat3dNote">z transakcji</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Ostatnie 7 dni</div>
-        <div class="stat-value" id="stat7d">—</div>
-        <div class="stat-note" id="stat7dNote">z transakcji</div>
-      </div>
+  <hr class="rule">
+
+  <!-- HISTORIA -->
+  <section class="panel">
+    <div class="history-head">
+      <div class="panel-title" style="margin-bottom:0">Historia wpisów</div>
+      <button class="undo" id="undoBtn" onclick="undoLast()">Cofnij ostatni</button>
     </div>
+    <div id="historyList"><div class="empty">Brak wpisów.</div></div>
+  </section>
 
-    <!-- WYKRESY -->
-    <div class="charts-row">
-      <div class="chart-card">
-        <div class="chart-title">Kapitał w czasie</div>
-        <div class="chart-box"><canvas id="capChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Dzienny wynik (ostatnie 14 dni)</div>
-        <div class="chart-box"><canvas id="plChart"></canvas></div>
-      </div>
-    </div>
-
-    <!-- AKCJE -->
-    <div class="actions-grid">
-      <div class="action-card">
-        <div class="card-eyebrow">Zapisz wynik transakcji</div>
-        <div class="seg">
-          <button type="button" class="active win" id="segWin" onclick="setTradeMode('win')">Zysk</button>
-          <button type="button" id="segLoss" onclick="setTradeMode('loss')">Strata</button>
-        </div>
-        <div class="quick-row" id="quickTrade"></div>
-        <div class="row-inline">
-          <input class="inp" type="number" step="0.01" min="0" id="tradeAmount" placeholder="Kwota np. 3.50">
-          <button class="btn-submit trade" onclick="submitTrade()">Zapisz</button>
-        </div>
-        <input class="inp" type="text" id="tradeNote" placeholder="Notatka (opcjonalnie) — para, setup..." style="margin-bottom:0">
-        <div class="fb-msg" id="tradeFb"></div>
-      </div>
-
-      <div class="action-card">
-        <div class="card-eyebrow">Dopłata kapitału (poza tradingiem)</div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Np. dorzucasz 5$ z boku — dolicza się do kapitału, ale nie liczy się jako wynik tradingu.</p>
-        <div class="quick-row" id="quickDeposit"></div>
-        <div class="row-inline">
-          <input class="inp" type="number" step="0.01" id="depositAmount" placeholder="Kwota np. 5.00 (ujemna = wypłata)">
-          <button class="btn-submit deposit" onclick="submitDeposit()">Dopłać</button>
-        </div>
-        <div class="fb-msg" id="depositFb"></div>
-      </div>
-    </div>
-
-    <!-- HISTORIA -->
-    <div class="history-card">
-      <div class="history-head">
-        <div class="card-eyebrow" style="margin-bottom:0">Historia wpisów</div>
-        <button class="undo-btn" id="undoBtn" onclick="undoLast()">Cofnij ostatni wpis</button>
-      </div>
-      <div id="historyList"><div class="empty-note">Brak wpisów.</div></div>
-    </div>
-
-  </div>
 </main>
 
 <script>
-  function toggleDrawer(){document.getElementById('drawer').classList.toggle('open');document.getElementById('overlay').classList.toggle('open')}
-  function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open')}
+  const fmt = n => (n >= 0 ? '' : '-') + Math.abs(n).toFixed(2) + '$';
+  const fmtSigned = n => (n > 0 ? '+' : '') + fmt(n);
 
-  const fmt = n => (n>=0?'':'-') + Math.abs(n).toFixed(2) + '$';
-  const fmtSigned = n => (n>0?'+':'') + fmt(n).replace(/^-/, '-');
-
-  let state = { startingCapital: 29.18, currentCapital: 29.18, entries: [] };
-  let tradeMode = 'win';
+  let state = { startingCapital: 0, currentCapital: 0, entries: [] };
+  let mode = 'win';
   let capChart, plChart;
 
   const QUICK_TRADE = [1, 2, 3, 5, 10];
   const QUICK_DEPOSIT = [5, 10, 20, 50];
 
-  document.getElementById('quickTrade').innerHTML = QUICK_TRADE.map(v =>
-    `<button type="button" class="q-chip" onclick="fillTrade(${v})">${v}$</button>`).join('');
-  document.getElementById('quickDeposit').innerHTML = QUICK_DEPOSIT.map(v =>
-    `<button type="button" class="q-chip" onclick="fillDeposit(${v})">${v}$</button>`).join('');
+  document.getElementById('tradeChips').innerHTML = QUICK_TRADE
+    .map(v => `<button type="button" class="chip-btn" onclick="fillTrade(${v})">${v}$</button>`).join('');
+  document.getElementById('depositChips').innerHTML = QUICK_DEPOSIT
+    .map(v => `<button type="button" class="chip-btn" onclick="fillDeposit(${v})">${v}$</button>`).join('');
 
-  function fillTrade(v){ document.getElementById('tradeAmount').value = v; }
-  function fillDeposit(v){ document.getElementById('depositAmount').value = v; }
+  function fillTrade(v) { document.getElementById('tradeAmount').value = v; }
+  function fillDeposit(v) { document.getElementById('depositAmount').value = v; }
 
-  function setTradeMode(m){
-    tradeMode = m;
-    document.getElementById('segWin').classList.toggle('active', m==='win');
-    document.getElementById('segLoss').classList.toggle('active', m==='loss');
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btnWin').classList.toggle('on', m === 'win');
+    document.getElementById('btnLoss').classList.toggle('on', m === 'loss');
   }
 
-  function localDay(iso){
+  function localDay(iso) {
     const d = new Date(iso);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function todayKey(){ return localDay(new Date().toISOString()); }
-  function daysAgoKey(n){ const d=new Date(); d.setDate(d.getDate()-n); return localDay(d.toISOString()); }
+  function todayKey() { return localDay(new Date().toISOString()); }
+  function daysAgoKey(n) { const d = new Date(); d.setDate(d.getDate() - n); return localDay(d.toISOString()); }
 
-  async function loadState(){
-    try{
+  async function loadState() {
+    try {
       const res = await fetch('/api/capital');
-      if(!res.ok) throw new Error('unauth');
+      if (!res.ok) throw new Error('unauth');
       state = await res.json();
       render();
-    }catch(e){
-      document.getElementById('capSub').textContent = 'Błąd ładowania danych — zaloguj się ponownie.';
+    } catch (e) {
+      document.getElementById('capDelta').textContent = 'Nie udało się wczytać danych — zaloguj się ponownie.';
     }
   }
 
-  function render(){
+  function render() {
     const cap = state.currentCapital;
     document.getElementById('capValue').textContent = fmt(cap);
+
     const diff = cap - state.startingCapital;
-    const pct = state.startingCapital ? (diff/state.startingCapital*100) : 0;
-    document.getElementById('capSub').innerHTML =
-      `Start: ${fmt(state.startingCapital)} · <span class="${diff>=0?'chg-pos':'chg-neg'}">${fmtSigned(diff)} (${diff>=0?'+':''}${pct.toFixed(1)}%)</span>`;
+    const pct = state.startingCapital ? (diff / state.startingCapital * 100) : 0;
+    document.getElementById('capDelta').innerHTML =
+      `start ${fmt(state.startingCapital)} · <span class="${diff >= 0 ? 'up' : 'down'}">${fmtSigned(diff)} (${diff >= 0 ? '+' : ''}${pct.toFixed(1)}%)</span>`;
 
     const target = cap * 0.05;
-    document.getElementById('targetValue').textContent = fmt(target);
+    document.getElementById('goalNum').textContent = fmt(target);
 
     const tKey = todayKey();
-    const todayTrades = state.entries.filter(e => e.type==='trade' && localDay(e.date)===tKey);
-    const todayPL = todayTrades.reduce((s,e)=>s+e.amount,0);
+    const todayTrades = state.entries.filter(e => e.type === 'trade' && localDay(e.date) === tKey);
+    const todayPL = todayTrades.reduce((s, e) => s + e.amount, 0);
 
-    const progressPct = target>0 ? Math.max(0, Math.min(100, (todayPL/target)*100)) : 0;
-    const fillEl = document.getElementById('progressFill');
-    fillEl.style.width = progressPct + '%';
-    fillEl.className = 'progress-fill' + (todayPL<0?' negative':(todayPL>=target?' over':''));
+    const pct2 = target > 0 ? Math.max(0, Math.min(100, (todayPL / target) * 100)) : 0;
+    const fillEl = document.getElementById('goalFill');
+    fillEl.style.width = pct2 + '%';
+    fillEl.className = 'fill' + (todayPL < 0 ? ' under' : (todayPL >= target && target > 0 ? ' hit' : ''));
 
-    const statusEl = document.getElementById('targetStatus');
-    if(todayPL >= target && target>0){
-      statusEl.textContent = 'Cel osiągnięty · nadwyżka ' + fmtSigned(todayPL-target);
-      statusEl.className = 'target-status pos';
+    const statusEl = document.getElementById('goalStatus');
+    if (target > 0 && todayPL >= target) {
+      statusEl.textContent = 'Cel osiągnięty — nadwyżka ' + fmtSigned(todayPL - target);
+      statusEl.className = 'goal-status hit';
     } else {
       const remaining = target - todayPL;
-      statusEl.textContent = (todayPL<0?'Strata dziś, do celu: ':'Zostało do celu: ') + fmt(remaining);
-      statusEl.className = 'target-status ' + (todayPL<0?'neg':'');
+      statusEl.textContent = (todayPL < 0 ? 'Strata dziś — do celu ' : 'Zostało do celu ') + fmt(remaining);
+      statusEl.className = 'goal-status' + (todayPL < 0 ? ' under' : '');
     }
 
-    function sumSince(daysBack){
-      const keys = new Set(); for(let i=0;i<daysBack;i++) keys.add(daysAgoKey(i));
-      return state.entries.filter(e=>e.type==='trade' && keys.has(localDay(e.date))).reduce((s,e)=>s+e.amount,0);
+    function sumSince(daysBack) {
+      const keys = new Set();
+      for (let i = 0; i < daysBack; i++) keys.add(daysAgoKey(i));
+      return state.entries.filter(e => e.type === 'trade' && keys.has(localDay(e.date))).reduce((s, e) => s + e.amount, 0);
     }
-    setStat('statToday','statTodayNote', todayPL, todayTrades.length);
-    const pl3 = sumSince(3);
-    setStat('stat3d','stat3dNote', pl3, state.entries.filter(e=>e.type==='trade'&&new Set([daysAgoKey(0),daysAgoKey(1),daysAgoKey(2)]).has(localDay(e.date))).length);
-    const pl7 = sumSince(7);
-    setStat('stat7d','stat7dNote', pl7, null);
+    setStat('statToday', 'statTodayNote', todayPL, todayTrades.length);
+    const keys3 = new Set([daysAgoKey(0), daysAgoKey(1), daysAgoKey(2)]);
+    setStat('stat3', 'stat3Note', sumSince(3), state.entries.filter(e => e.type === 'trade' && keys3.has(localDay(e.date))).length);
+    setStat('stat7', null, sumSince(7), null);
 
     renderHistory();
     renderCharts();
   }
 
-  function setStat(valId, noteId, val, count){
+  function setStat(valId, noteId, val, count) {
     const el = document.getElementById(valId);
     el.textContent = fmtSigned(val);
-    el.className = 'stat-value ' + (val>0?'pos':(val<0?'neg':'zero'));
-    if(count!==null) document.getElementById(noteId).textContent = count + ' transakcji';
+    el.className = 'stat-val ' + (val > 0 ? 'up' : (val < 0 ? 'down' : 'flat'));
+    if (noteId && count !== null) document.getElementById(noteId).textContent = count + ' transakcji';
   }
 
-  function renderHistory(){
+  function renderHistory() {
     const list = document.getElementById('historyList');
     const entries = [...state.entries].reverse().slice(0, 60);
     document.getElementById('undoBtn').disabled = state.entries.length === 0;
-    if(entries.length === 0){ list.innerHTML = '<div class="empty-note">Brak wpisów.</div>'; return; }
-    list.innerHTML = entries.map(e=>{
+    if (entries.length === 0) { list.innerHTML = '<div class="empty">Brak wpisów.</div>'; return; }
+    list.innerHTML = entries.map(e => {
       const d = new Date(e.date);
-      const dateStr = d.toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
-      return `<div class="hist-row">
-        <div class="hist-date">${dateStr}</div>
-        <div class="hist-note">${e.note ? escapeHtml(e.note) : (e.type==='trade'?'transakcja':'dopłata kapitału')}</div>
-        <div class="hist-tag ${e.type}">${e.type==='trade'?'trade':'wpłata'}</div>
-        <div class="hist-amount ${e.amount>=0?'pos':'neg'}">${fmtSigned(e.amount)}</div>
+      const dateStr = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+      const label = e.note ? escapeHtml(e.note) : (e.type === 'trade' ? 'transakcja' : 'dopłata kapitału');
+      return `<div class="entry">
+        <div class="when">${dateStr}</div>
+        <div class="what">${label} <span class="tag">${e.type === 'trade' ? '' : '— wpłata'}</span></div>
+        <div class="amt ${e.amount >= 0 ? 'up' : 'down'}">${fmtSigned(e.amount)}</div>
       </div>`;
     }).join('');
   }
-  function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-  function renderCharts(){
-    const points = [{x:0, y:state.startingCapital, label:'start'}].concat(
-      state.entries.map((e,i)=>({x:i+1, y:e.balanceAfter, label:localDay(e.date)}))
+  function renderCharts() {
+    const points = [{ x: 0, y: state.startingCapital, label: 'start' }].concat(
+      state.entries.map((e, i) => ({ x: i + 1, y: e.balanceAfter, label: localDay(e.date) }))
     );
     const capCtx = document.getElementById('capChart');
-    if(capChart) capChart.destroy();
+    if (capChart) capChart.destroy();
     capChart = new Chart(capCtx, {
       type: 'line',
-      data: { labels: points.map(p=>p.label), datasets: [{
-        data: points.map(p=>p.y), borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.08)',
-        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2
-      }]},
+      data: {
+        labels: points.map(p => p.label),
+        datasets: [{
+          data: points.map(p => p.y),
+          borderColor: '#c8953c',
+          backgroundColor: 'rgba(200,149,60,0.08)',
+          fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2
+        }]
+      },
       options: {
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},
-        scales:{
-          x:{ticks:{color:'rgba(255,255,255,0.3)', maxTicksLimit:6}, grid:{color:'rgba(255,255,255,0.05)'}},
-          y:{ticks:{color:'rgba(255,255,255,0.3)', callback:v=>fmt(v)}, grid:{color:'rgba(255,255,255,0.05)'}}
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
+        scales: {
+          x: { ticks: { color: 'rgba(244,239,228,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } },
+          y: { ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } }
         }
       }
     });
 
     const dayMap = {};
-    for(let i=13;i>=0;i--){ dayMap[daysAgoKey(i)] = 0; }
-    state.entries.filter(e=>e.type==='trade').forEach(e=>{
+    for (let i = 13; i >= 0; i--) dayMap[daysAgoKey(i)] = 0;
+    state.entries.filter(e => e.type === 'trade').forEach(e => {
       const k = localDay(e.date);
-      if(k in dayMap) dayMap[k] += e.amount;
+      if (k in dayMap) dayMap[k] += e.amount;
     });
-    const labels = Object.keys(dayMap).map(k=>k.slice(5));
+    const labels = Object.keys(dayMap).map(k => k.slice(5));
     const vals = Object.values(dayMap);
     const plCtx = document.getElementById('plChart');
-    if(plChart) plChart.destroy();
+    if (plChart) plChart.destroy();
     plChart = new Chart(plCtx, {
-      type:'bar',
-      data:{ labels, datasets:[{ data: vals, backgroundColor: vals.map(v=>v>=0?'#22c55e':'#f87171'), borderRadius:3 }]},
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},
-        scales:{
-          x:{ticks:{color:'rgba(255,255,255,0.3)'}, grid:{display:false}},
-          y:{ticks:{color:'rgba(255,255,255,0.3)', callback:v=>fmt(v)}, grid:{color:'rgba(255,255,255,0.05)'}}
+      type: 'bar',
+      data: { labels, datasets: [{ data: vals, backgroundColor: vals.map(v => v >= 0 ? '#74a06d' : '#c1584a'), borderRadius: 3 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
+        scales: {
+          x: { ticks: { color: 'rgba(244,239,228,0.3)', font: { family: 'Inter' } }, grid: { display: false } },
+          y: { ticks: { color: 'rgba(244,239,228,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(244,239,228,0.05)' } }
         }
       }
     });
   }
 
-  async function submitTrade(){
+  async function submitTrade() {
     const fb = document.getElementById('tradeFb');
     const raw = parseFloat(document.getElementById('tradeAmount').value);
-    if(isNaN(raw) || raw<=0){ fb.textContent='Podaj kwotę większą od 0'; fb.className='fb-msg err'; return; }
-    const amount = tradeMode==='win' ? raw : -raw;
+    if (isNaN(raw) || raw <= 0) { fb.textContent = 'Podaj kwotę większą od 0'; fb.className = 'feedback err'; return; }
+    const amount = mode === 'win' ? raw : -raw;
     const note = document.getElementById('tradeNote').value;
     await postEntry('trade', amount, note, fb);
-    document.getElementById('tradeAmount').value='';
-    document.getElementById('tradeNote').value='';
+    document.getElementById('tradeAmount').value = '';
+    document.getElementById('tradeNote').value = '';
   }
 
-  async function submitDeposit(){
+  async function submitDeposit() {
     const fb = document.getElementById('depositFb');
     const amount = parseFloat(document.getElementById('depositAmount').value);
-    if(isNaN(amount) || amount===0){ fb.textContent='Podaj niezerową kwotę'; fb.className='fb-msg err'; return; }
+    if (isNaN(amount) || amount === 0) { fb.textContent = 'Podaj niezerową kwotę'; fb.className = 'feedback err'; return; }
     await postEntry('deposit', amount, '', fb);
-    document.getElementById('depositAmount').value='';
+    document.getElementById('depositAmount').value = '';
   }
 
-  async function postEntry(type, amount, note, fb){
-    try{
+  async function postEntry(type, amount, note, fb) {
+    try {
       const res = await fetch('/api/capital/entry', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, amount, note })
       });
       const data = await res.json();
-      if(!res.ok) throw new Error(data.error || 'Błąd');
+      if (!res.ok) throw new Error(data.error || 'Błąd');
       state = data;
       render();
-      fb.textContent = '✓ Zapisano'; fb.className='fb-msg ok';
-      setTimeout(()=>{ fb.textContent=''; fb.className='fb-msg'; }, 2500);
-    }catch(e){
-      fb.textContent = e.message; fb.className='fb-msg err';
+      fb.textContent = 'Zapisano'; fb.className = 'feedback ok';
+      setTimeout(() => { fb.textContent = ''; fb.className = 'feedback'; }, 2500);
+    } catch (e) {
+      fb.textContent = e.message; fb.className = 'feedback err';
     }
   }
 
-  async function undoLast(){
-    if(state.entries.length===0) return;
-    const last = state.entries[state.entries.length-1];
-    if(!confirm('Cofnąć ostatni wpis: ' + fmtSigned(last.amount) + '?')) return;
-    try{
-      const res = await fetch('/api/capital/entry/' + last.id, { method:'DELETE' });
+  async function undoLast() {
+    if (state.entries.length === 0) return;
+    const last = state.entries[state.entries.length - 1];
+    if (!confirm('Cofnąć ostatni wpis: ' + fmtSigned(last.amount) + '?')) return;
+    try {
+      const res = await fetch('/api/capital/entry/' + last.id, { method: 'DELETE' });
       const data = await res.json();
-      if(!res.ok) throw new Error(data.error || 'Błąd');
+      if (!res.ok) throw new Error(data.error || 'Błąd');
       state = data;
       render();
-    }catch(e){ alert(e.message); }
+    } catch (e) { alert(e.message); }
   }
 
   loadState();
