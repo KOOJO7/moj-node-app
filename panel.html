@@ -319,14 +319,14 @@
       state = await res.json();
       render();
     } catch (e) {
-      document.getElementById('goalStatus').textContent = 'Błąd ładowania — odśwież stronę.';
+      document.getElementById('goalStatus').textContent = 'błąd ładowania';
     }
   }
 
   function render() {
     renderGoal();
     renderQuick();
-    renderProjections();
+    renderProj();
     renderJournal();
     renderStats(computeDays());
     renderPerfChart();
@@ -339,27 +339,23 @@
     const x = new Date(d);
     return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
   }
-  function daysAgoKey(n) {
-    const d = new Date(); d.setDate(d.getDate() - n); return localDay(d);
+  function daysAgoKey(i) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return localDay(d);
   }
   function keyToShort(k) {
     const [y, m, d] = k.split('-');
     return d + '.' + m;
   }
-  function cls(n) { return n > 0 ? 'up' : (n < 0 ? 'down' : 'flat'); }
-  function fmtPct(n, signed) {
-    if (n === null || n === undefined || !isFinite(n)) return '—';
-    const s = (signed && n > 0 ? '+' : '') + n.toFixed(2) + '%';
+  function cls(v) { return v > 0 ? 'up' : (v < 0 ? 'down' : 'flat'); }
+  function fmtPct(v, signed) {
+    if (v === null || v === undefined || !isFinite(v)) return '—';
+    const s = (signed && v > 0 ? '+' : '') + v.toFixed(2) + '%';
     return s;
   }
-  function plTrades(n) {
-    if (n === 1) return '1 transakcja';
-    if (n >= 2 && n <= 4) return n + ' transakcje';
-    return n + ' transakcji';
-  }
-  function escapeHtml(s) {
-    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+  function plTrades(n) { return n + (n === 1 ? ' transakcja' : (n < 5 ? ' transakcje' : ' transakcji')); }
+  function escapeHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function dailyPLMap() {
     const map = {};
@@ -372,114 +368,86 @@
 
   function computeDays() {
     const map = dailyPLMap();
-    const keys = Object.keys(map).sort();
-    let bal = state.startingCapital;
-    // reconstruct day-by-day from entries order
-    const byDay = {};
-    state.entries.forEach(e => {
-      const k = localDay(e.date);
-      if (!byDay[k]) byDay[k] = { pl: 0, notes: [] };
-      if (e.type === 'trade') {
-        byDay[k].pl += e.amount;
-        if (e.note) byDay[k].notes.push(e.note);
-      }
-    });
-    // better: walk all entries chronologically to get opening balance per day for pct
     const days = [];
-    const sortedKeys = Object.keys(byDay).sort();
-    let running = state.startingCapital;
-    // approximate: use balance after first trade of day vs start of day
-    const trades = state.entries.filter(e => e.type === 'trade');
-    const deposits = state.entries.filter(e => e.type === 'deposit');
-    // simpler approach matching original intent
-    const dayMap = {};
-    state.entries.forEach(e => {
-      const k = localDay(e.date);
-      if (!dayMap[k]) dayMap[k] = { pl: 0, notes: [], open: null };
-      if (e.type === 'trade') {
-        dayMap[k].pl += e.amount;
-        if (e.note) dayMap[k].notes.push(e.note);
-        if (dayMap[k].open === null) dayMap[k].open = e.balanceAfter - e.amount;
-      }
+    // ostatnie ~400 dni z wpisami
+    const keys = Object.keys(map).sort();
+    keys.forEach(k => {
+      const pl = map[k];
+      // % względem kapitału na początek dnia — przybliżenie: current - sum of later trades is hard;
+      // używamy prostego % od startingCapital jeśli brak lepszego
+      const pct = state.startingCapital > 0 ? (pl / state.startingCapital) * 100 : 0;
+      days.push({ key: k, pl, pct });
     });
-    sortedKeys.forEach(k => {
-      const d = dayMap[k];
-      const open = d.open != null ? d.open : state.startingCapital;
-      const pct = open > 0 ? (d.pl / open) * 100 : 0;
-      days.push({ key: k, pl: d.pl, pct, notes: d.notes });
-    });
-    return { days, dayMap };
+    return { days, map };
   }
 
+  // ---------- cel dzienny ----------
   function renderGoal() {
     const todayKey = localDay(new Date());
-    const tradesToday = state.entries.filter(e => e.type === 'trade' && localDay(e.date) === todayKey);
-    const pl = tradesToday.reduce((s, e) => s + e.amount, 0);
-    // approximate open capital today
-    let open = state.currentCapital - pl;
-    if (open <= 0) open = state.currentCapital || 1;
-    const pct = open > 0 ? (pl / open) * 100 : 0;
-    const goalPln = open * (GOAL_PCT / 100);
+    const map = dailyPLMap();
+    const todayPl = map[todayKey] || 0;
+    const cap = state.currentCapital || 0;
+    const todayPctVal = cap > 0 ? (todayPl / (cap - todayPl || cap)) * 100 : 0;
+    // prostsze: % od kapitału przed dzisiejszymi trade'ami
+    let baseline = cap;
+    state.entries.filter(e => e.type === 'trade' && localDay(e.date) === todayKey).forEach(e => { baseline -= e.amount; });
+    const pctFromBase = baseline > 0 ? (todayPl / baseline) * 100 : 0;
 
     document.getElementById('goalPct').textContent = GOAL_PCT + '%';
-    document.getElementById('goalPln').textContent = '≈ ' + fmt(goalPln);
+    document.getElementById('goalPln').textContent = '≈ ' + fmt(cap * GOAL_PCT / 100);
 
     const todayEl = document.getElementById('todayPct');
-    todayEl.textContent = fmtPct(pct, true);
-    todayEl.className = 'big num ' + cls(pct);
-    document.getElementById('todayPl').textContent = fmtSigned(pl);
+    todayEl.textContent = fmtPct(pctFromBase, true);
+    todayEl.className = 'big num ' + cls(pctFromBase);
+    document.getElementById('todayPl').textContent = fmtSigned(todayPl);
 
-    const prog = Math.min(150, Math.max(0, (pct / GOAL_PCT) * 100));
+    const progress = GOAL_PCT !== 0 ? Math.min(150, Math.max(0, (pctFromBase / GOAL_PCT) * 100)) : 0;
     const fill = document.getElementById('goalFill');
-    fill.style.width = prog + '%';
-    fill.className = 'fill' + (pct >= GOAL_PCT ? ' hit' : (pct < 0 ? ' under' : ''));
+    fill.style.width = progress + '%';
+    fill.className = 'fill' + (pctFromBase >= GOAL_PCT ? ' hit' : (pctFromBase < 0 ? ' under' : ''));
 
-    document.getElementById('progressPct').textContent = Math.round(prog) + '%';
-    document.getElementById('progressPct').className = 'prog-val num ' + (pct >= GOAL_PCT ? 'up' : (pct < 0 ? 'down' : ''));
+    const progEl = document.getElementById('progressPct');
+    progEl.textContent = Math.round(progress) + '%';
+    progEl.className = 'prog-val num ' + (pctFromBase >= GOAL_PCT ? 'up' : (pctFromBase < 0 ? 'down' : ''));
 
     const st = document.getElementById('goalStatus');
-    if (tradesToday.length === 0) {
-      st.textContent = 'Jeszcze nic dziś nie zapisano.';
-      st.className = 'goal-status';
-    } else if (pct >= GOAL_PCT) {
-      st.textContent = 'Cel dnia osiągnięty. Dobra robota.';
+    if (pctFromBase >= GOAL_PCT) {
+      st.textContent = 'Cel dnia osiągnięty 🎉';
       st.className = 'goal-status hit';
-    } else if (pct < 0) {
-      st.textContent = 'Dziś na minusie — jutro nowa szansa.';
+    } else if (pctFromBase < 0) {
+      st.textContent = 'Na minusie — jeszcze możesz odwrócić dzień.';
       st.className = 'goal-status under';
     } else {
-      st.textContent = 'Jeszcze ' + fmtPct(GOAL_PCT - pct) + ' do celu.';
+      st.textContent = 'Do celu zostało ' + fmtPct(GOAL_PCT - pctFromBase) + '.';
       st.className = 'goal-status';
     }
   }
 
   function previewPct() {
+    const el = document.getElementById('pctHint');
     const raw = parseFloat(document.getElementById('pctInput').value);
-    const hint = document.getElementById('pctHint');
-    if (isNaN(raw)) { hint.textContent = 'Procent liczy się od obecnego kapitału i zapisuje jako transakcja. Rynek i notatkę dodasz na stronie Zapis.'; hint.className = 'field-hint'; return; }
-    const amount = state.currentCapital * (raw / 100);
-    hint.textContent = '≈ ' + fmtSigned(amount) + ' (od kapitału ' + fmt(state.currentCapital) + ')';
-    hint.className = 'field-hint';
+    if (isNaN(raw)) { el.textContent = 'Procent liczy się od obecnego kapitału i zapisuje jako transakcja. Rynek i notatkę dodasz na stronie Zapis.'; el.className = 'field-hint'; return; }
+    const amt = state.currentCapital * (raw / 100);
+    el.textContent = '≈ ' + fmtSigned(amt) + ' (od ' + fmt(state.currentCapital) + ')';
+    el.className = 'field-hint';
   }
 
   async function submitPct() {
     const raw = parseFloat(document.getElementById('pctInput').value);
     const hint = document.getElementById('pctHint');
-    if (isNaN(raw) || raw === 0) { hint.textContent = 'Podaj niezerowy procent.'; hint.className = 'field-hint err'; return; }
+    if (isNaN(raw) || raw === 0) { hint.textContent = 'Podaj niezerowy procent'; hint.className = 'field-hint err'; return; }
     const amount = state.currentCapital * (raw / 100);
     try {
       const res = await fetch('/api/capital/entry', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'trade', amount, note: raw + '%', market: '' })
+        body: JSON.stringify({ type: 'trade', amount, note: 'wynik dnia ' + raw + '%', market: '' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Błąd');
       state = data;
       document.getElementById('pctInput').value = '';
-      hint.textContent = 'Zapisano.';
-      hint.className = 'field-hint';
-      LYS.toast('Zapisano wynik dnia', 'ok');
       render();
+      LYS.toast('Zapisano wynik dnia', 'ok');
     } catch (e) {
       hint.textContent = e.message;
       hint.className = 'field-hint err';
@@ -487,6 +455,7 @@
     }
   }
 
+  // ---------- szybki podgląd ----------
   function renderQuick() {
     const trades = state.entries.filter(e => e.type === 'trade');
     const deposits = state.entries.filter(e => e.type === 'deposit');
@@ -495,68 +464,70 @@
     const todayKey = localDay(new Date());
     const todayPl = trades.filter(e => localDay(e.date) === todayKey).reduce((s, e) => s + e.amount, 0);
 
-    document.getElementById('quick').innerHTML = `
-      <div class="kv main"><span class="k">Kapitał</span><span class="v num">${fmt(state.currentCapital)}</span></div>
-      <div class="kv"><span class="k">Start</span><span class="v num">${fmt(state.startingCapital)}</span></div>
-      <div class="kv"><span class="k">Wynik tradingu</span><span class="v num ${cls(totalTrade)}">${fmtSigned(totalTrade)}</span></div>
-      <div class="kv"><span class="k">Dopłaty netto</span><span class="v num ${cls(totalDep)}">${fmtSigned(totalDep)}</span></div>
-      <div class="kv"><span class="k">Dziś</span><span class="v num ${cls(todayPl)}">${fmtSigned(todayPl)}</span></div>
-      <div class="kv"><span class="k">Transakcje</span><span class="v num">${trades.length}</span></div>
-    `;
+    document.getElementById('quick').innerHTML = [
+      `<div class="kv main"><span class="k">Kapitał</span><span class="v num">${fmt(state.currentCapital)}</span></div>`,
+      `<div class="kv"><span class="k">Start</span><span class="v num">${fmt(state.startingCapital)}</span></div>`,
+      `<div class="kv"><span class="k">Wynik tradingu</span><span class="v num ${cls(totalTrade)}">${fmtSigned(totalTrade)}</span></div>`,
+      `<div class="kv"><span class="k">Dopłaty</span><span class="v num">${fmtSigned(totalDep)}</span></div>`,
+      `<div class="kv"><span class="k">Dziś</span><span class="v num ${cls(todayPl)}">${fmtSigned(todayPl)}</span></div>`,
+      `<div class="kv"><span class="k">Transakcje</span><span class="v num">${trades.length}</span></div>`
+    ].join('');
   }
 
-  function renderProjections() {
-    const trades = state.entries.filter(e => e.type === 'trade');
+  // ---------- projekcje ----------
+  function renderProj() {
     const days = computeDays().days;
-    let avgPct = 0;
-    if (days.length) avgPct = days.reduce((s, d) => s + d.pct, 0) / days.length;
-    else avgPct = 0;
+    const recent = days.slice(-20);
+    const avgPct = recent.length ? recent.reduce((s, d) => s + d.pct, 0) / recent.length : 0;
+    document.getElementById('projNote').textContent = recent.length
+      ? 'Średnia z ostatnich ' + recent.length + ' dni z wynikiem: ' + fmtPct(avgPct, true) + ' dziennie (robocze).'
+      : 'Za mało danych — dodaj kilka wyników, żeby zobaczyć projekcje.';
 
-    const note = document.getElementById('projNote');
-    if (days.length < 3) {
-      note.textContent = 'Za mało danych — projekcje oparte o cel ' + GOAL_PCT + '% dziennie.';
-      avgPct = GOAL_PCT;
-    } else {
-      note.textContent = 'Średnia dzienna z ' + days.length + ' dni: ' + fmtPct(avgPct, true) + '. Projekcja zakłada tyle samo dni roboczych.';
-    }
-
-    const cap = state.currentCapital;
     const horizons = [
-      { label: '7 dni roboczych', n: 7 },
-      { label: '21 dni roboczych', n: 21 },
-      { label: '60 dni roboczych', n: 60 }
+      { lab: '1 tydzień', n: 5 },
+      { lab: '1 miesiąc', n: 22 },
+      { lab: '3 miesiące', n: 66 },
+      { lab: '1 rok', n: 252 }
     ];
+    const cap = state.currentCapital;
     document.getElementById('projRows').innerHTML = horizons.map(h => {
-      const final = cap * Math.pow(1 + avgPct / 100, h.n);
-      const gain = final - cap;
+      const mult = Math.pow(1 + avgPct / 100, h.n);
+      const final = cap * mult;
       return `<div class="proj-row">
-        <div><div class="proj-lab">${h.label}</div><div class="proj-pct num ${cls(avgPct)}">${fmtPct(avgPct * h.n / 1, true)}</div></div>
-        <div class="proj-amt num ${cls(gain)}">${fmt(final)}<br><small>${fmtSigned(gain)}</small></div>
+        <div><div class="proj-lab">${h.lab}</div><div class="proj-pct num ${cls(avgPct)}">${fmtPct((mult - 1) * 100, true)}</div></div>
+        <div class="proj-amt num">${fmt(final)}</div>
       </div>`;
     }).join('');
   }
 
+  // ---------- dziennik ----------
   function renderJournal() {
-    const c = computeDays();
-    const recent = [...c.days].reverse().slice(0, 7);
-    const el = document.getElementById('journal');
-    if (recent.length === 0) {
-      el.innerHTML = '<div class="empty">Brak wpisów w dzienniku.</div>';
-      return;
-    }
-    el.innerHTML = `<table class="data-table jr"><thead><tr><th>Dzień</th><th>%</th><th>PLN</th><th>Notatka</th></tr></thead><tbody>` +
-      recent.map(d => {
-        const k = cls(d.pct);
-        const note = d.notes.length ? escapeHtml(d.notes[0]) : '—';
+    const map = {};
+    state.entries.filter(e => e.type === 'trade').forEach(e => {
+      const k = localDay(e.date);
+      if (!map[k]) map[k] = { pl: 0, notes: [] };
+      map[k].pl += e.amount;
+      if (e.note) map[k].notes.push(e.note);
+    });
+    const keys = Object.keys(map).sort().reverse().slice(0, 7);
+    const host = document.getElementById('journal');
+    if (keys.length === 0) { host.innerHTML = '<div class="empty">Brak transakcji.</div>'; return; }
+    host.innerHTML = `<table class="data-table jr"><thead><tr><th>Dzień</th><th>%</th><th>PLN</th><th>Notatka</th></tr></thead><tbody>` +
+      keys.map(k => {
+        const d = map[k];
+        const pct = state.startingCapital > 0 ? (d.pl / state.startingCapital) * 100 : 0;
+        const note = d.notes.slice(0, 1).map(escapeHtml).join('') || '—';
+        const clsK = cls(d.pl);
         return `<tr>
-          <td><span class="dot ${k}"></span>${keyToShort(d.key)}</td>
-          <td class="num ${k}">${fmtPct(d.pct, true)}</td>
-          <td class="num ${k}">${fmtSigned(d.pl)}</td>
+          <td><span class="dot ${clsK}"></span>${keyToShort(k)}</td>
+          <td class="num ${clsK}">${fmtPct(pct, true)}</td>
+          <td class="num ${clsK}">${fmtSigned(d.pl)}</td>
           <td class="note" title="${d.notes.map(escapeHtml).join(' | ')}">${note}</td>
         </tr>`;
       }).join('') + `</tbody></table>`;
   }
 
+  // ---------- statystyki ----------
   function currentStreak() {
     const map = dailyPLMap();
     let i = 0, streak = 0, sign = 0;
@@ -609,6 +580,7 @@
       : '<span style="font-size:12px;color:var(--ink-faint)">Dodawaj tag rynku przy zapisie transakcji.</span>';
   }
 
+  // ---------- wykres wyniku z zakładkami okresów ----------
   const PERIODS = [
     { id: 'day',   label: 'Dzień' },
     { id: 'week',  label: 'Tydzień',    days: 7 },
@@ -790,6 +762,7 @@
     });
   }
 
+  // ---------- kalendarz wyników ----------
   function renderHeatmap() {
     const map = dailyPLMap();
     const total = 35;
@@ -808,6 +781,7 @@
     }).join('');
   }
 
+  // ---------- wynik wg rynku ----------
   function renderMarketStats() {
     const trades = state.entries.filter(e => e.type === 'trade');
     const groups = {};
@@ -836,6 +810,7 @@
     }).join('');
   }
 
+  // ---------- historia ----------
   function renderHistory() {
     const list = document.getElementById('historyList');
     const entries = [...state.entries].reverse().slice(0, 60);
@@ -885,6 +860,7 @@
     LYS.toast('Wyeksportowano CSV', 'ok');
   }
 
+  // ---------- szybkie notatki (zapamiętywane w tej przeglądarce) ----------
   function loadNotes() {
     try { document.getElementById('notesInput').value = localStorage.getItem(NOTES_KEY) || ''; } catch (e) {}
   }
@@ -895,6 +871,7 @@
     } catch (e) { LYS.toast('Nie udało się zapisać notatki', 'err'); }
   }
 
+  // ---------- start ----------
   paintPeriodSeg();
   loadNotes();
   LYS.renderCurrencySwitcher(document.getElementById('curSwitch'), () => { render(); previewPct(); });
