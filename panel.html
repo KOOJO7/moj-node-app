@@ -14,37 +14,111 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="app.js"></script>
 <style>
-  .hero-row { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+  /* ---------- układ ---------- */
+  .dash { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+  .pair > .panel { min-width: 0; }
+  .below { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
 
-  .goal-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
-  .goal-title { font-size: 14.5px; color: var(--ink); }
-  .goal-title span { color: var(--ink-faint); font-size: 13px; }
-  .goal-num { font-family: var(--serif); font-size: 22px; font-weight: 500; color: var(--gold); }
-  .track { height: 6px; border-radius: 3px; background: var(--line-soft); overflow: hidden; margin-bottom: 12px; }
-  .fill { height: 100%; border-radius: 3px; background: var(--gold); width: 0%; transition: width 0.5s ease, background 0.3s ease; }
+  .ttl { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-size: 14.5px; font-weight: 600; }
+  .ttl .ico { color: var(--gold); }
+
+  /* ---------- dzienny cel ---------- */
+  .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+  .mini-label { font-size: 13px; color: var(--ink-dim); margin-bottom: 8px; }
+  .big { font-family: var(--serif); font-weight: 500; font-size: clamp(34px, 5vw, 46px); line-height: 1.05; letter-spacing: -0.015em; }
+  .big.flat { color: var(--ink-faint); }
+  .sub { font-size: 14px; color: var(--ink-dim); margin-top: 8px; }
+  .track { height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; margin: 16px 0 14px; }
+  .fill { height: 100%; border-radius: 4px; background: var(--gold); width: 0%; transition: width 0.5s ease, background 0.3s ease; }
   .fill.hit { background: var(--good); }
   .fill.under { background: var(--bad); }
-  .goal-status { font-size: 13.5px; color: var(--ink-dim); }
+  .prog-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .prog-row .mini-label { margin-bottom: 0; }
+  .prog-val { font-family: var(--serif); font-size: 20px; font-weight: 500; }
+  .prog-val.flat { color: var(--ink-faint); }
+  .goal-status { font-size: 13px; color: var(--ink-dim); margin-top: 18px; }
   .goal-status.hit { color: var(--good); }
   .goal-status.under { color: var(--bad); }
 
-  .stats { display: grid; grid-template-columns: repeat(5, 1fr); }
-  .stat { padding: 4px 18px; border-left: 1px solid var(--line); }
-  .stat:first-child { padding-left: 0; border-left: none; }
-  .stat-label { font-size: 12px; color: var(--ink-faint); margin-bottom: 8px; }
-  .stat-val { font-family: var(--serif); font-size: 22px; font-weight: 500; }
-  .stat-val.up { color: var(--good); }
-  .stat-val.down { color: var(--bad); }
-  .stat-val.flat { color: var(--ink-faint); }
-  .stat-note { font-size: 11.5px; color: var(--ink-faint); margin-top: 5px; }
+  .addbox { margin-top: 20px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,0.16); }
+  .addbox label { display: block; font-size: 13px; color: var(--ink); font-weight: 500; margin-bottom: 10px; }
+  .addrow { display: flex; gap: 10px; }
+  .pct-field { position: relative; flex: 1; min-width: 0; }
+  .pct-field input { padding-right: 34px; }
+  .pct-field span { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 13px; pointer-events: none; }
+  .addbox .field-hint { margin: 9px 0 0; }
+  .addbox .field-hint.err { color: var(--bad); }
 
-  .charts { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
-  .chart-box { position: relative; height: 200px; }
+  /* ---------- wykres z okresami ---------- */
+  .chart-head { flex-wrap: wrap; row-gap: 12px; }
+  .seg { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-2); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg button { border: none; background: transparent; color: var(--ink-faint); font: 500 12px var(--sans); padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: color 0.15s, background 0.15s; }
+  .seg button:hover { color: var(--ink-dim); }
+  .seg button.on { background: var(--gold-dim); color: var(--gold-bright); }
+  .seg button:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .chart-sum { font-size: 13px; color: var(--ink-dim); margin: -4px 0 12px; min-height: 18px; }
+  .chart-box { position: relative; height: 300px; }
+  .chart-empty { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: 13px; color: var(--ink-faint); pointer-events: none; text-align: center; padding: 0 20px; }
+  .chart-empty.show { display: flex; }
 
+  /* ---------- dziennik ---------- */
+  .jr th, .jr td { padding-left: 8px; padding-right: 8px; }
+  .jr th:first-child, .jr td:first-child { padding-left: 0; }
+  .jr th:last-child, .jr td:last-child { text-align: left; }
+  .jr td.note { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-faint); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 9px; vertical-align: 1px; }
+  .dot.up { background: var(--good); } .dot.down { background: var(--bad); }
+  .more-btn { width: 100%; margin-top: 14px; }
+  .empty { font-size: 13px; color: var(--ink-faint); padding: 26px 0; text-align: center; line-height: 1.6; }
+
+  /* ---------- statystyki ---------- */
+  .stats-card { container-type: inline-size; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); border-radius: 10px; overflow: hidden; }
+  .stat-cell { background: var(--panel); padding: 12px 12px 13px; min-width: 0; }
+  .stat-cell .l { font-size: 11.5px; color: var(--ink-faint); margin-bottom: 6px; }
+  .stat-cell .v { font-family: var(--serif); font-size: 17px; font-weight: 500; overflow-wrap: anywhere; }
+  .stat-cell .v.up { color: var(--good); } .stat-cell .v.down { color: var(--bad); } .stat-cell .v.flat { color: var(--ink-faint); }
+  .stat-cell .n { font-size: 11px; color: var(--ink-faint); margin-top: 4px; }
+  @container (max-width: 420px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+  .top-markets { margin-top: 18px; }
+  .top-markets .mini-label { font-size: 12.5px; margin-bottom: 10px; }
+  .top-markets .chips { margin-bottom: 0; }
+  .top-markets .chip-btn { cursor: default; }
+
+  /* ---------- szybki podgląd ---------- */
+  .kv { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line-soft); font-size: 13.5px; }
+  .kv:last-child { border-bottom: none; padding-bottom: 0; }
+  .kv:first-child { padding-top: 0; }
+  .kv .k { color: var(--ink-dim); }
+  .kv .v { font-family: var(--serif); font-weight: 500; font-size: 15px; text-align: right; }
+  .kv .v small { font-family: var(--sans); font-size: 11.5px; color: var(--ink-faint); font-weight: 400; margin-left: 6px; }
+  .kv .v.flat { color: var(--ink-faint); }
+  .kv.main .v { font-size: 20px; }
+
+  /* ---------- projekcje ---------- */
+  .proj-note { font-size: 12.5px; color: var(--ink-dim); line-height: 1.6; margin: -6px 0 10px; }
+  .proj-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+  .proj-lab { font-size: 12px; color: var(--ink-faint); margin-bottom: 3px; }
+  .proj-pct { font-family: var(--serif); font-size: 19px; font-weight: 500; }
+  .proj-amt { font-size: 12.5px; color: var(--ink-dim); text-align: right; overflow-wrap: anywhere; }
+  .proj-foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--ink-faint); margin-top: 4px; line-height: 1.55; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+  .proj-foot a { color: var(--gold-bright); text-decoration: none; white-space: nowrap; }
+  .proj-foot a:hover { text-decoration: underline; }
+
+  /* ---------- notatki ---------- */
+  textarea.notes { display: block; width: 100%; min-height: 120px; resize: vertical; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink); padding: 12px; font: 14px/1.55 var(--sans); outline: none; transition: border-color 0.15s; margin-bottom: 12px; }
+  textarea.notes:focus { border-color: var(--gold); }
+  textarea.notes::placeholder { color: var(--ink-faint); }
+  .notes-btn { width: 100%; }
+
+  /* ---------- dolne sekcje ---------- */
   .heat-legend { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-faint); }
   .heat-legend .cell { width: 11px; height: 11px; border-radius: 3px; }
 
-  .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
+  .history-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; }
   .history-actions { display: flex; gap: 8px; }
   .undo { font-size: 12.5px; color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 7px 13px; cursor: pointer; transition: all 0.15s; }
   .undo:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-faint); }
@@ -57,157 +131,186 @@
   .entry .what .tag { color: var(--ink-faint); }
   .entry .amt { font-family: var(--serif); font-weight: 500; text-align: right; }
 
+  @media (max-width: 1100px) {
+    .dash { grid-template-columns: 1fr; }
+  }
   @media (max-width: 760px) {
-    .charts { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: repeat(2, 1fr); gap: 18px 12px; }
-    .stat { border-left: none; padding-left: 0; }
-    .stat:nth-child(odd) { padding-right: 12px; }
     .entry { grid-template-columns: 60px 1fr auto; }
     .heatmap { grid-template-columns: repeat(auto-fill, 13px); }
     .heatmap .cell { width: 13px; height: 13px; }
+  }
+  @media (max-width: 560px) {
+    .goal-grid { grid-template-columns: 1fr; gap: 22px; }
+    .chart-box { height: 240px; }
+    .pair { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<header class="top">
-  <a href="/panel" class="brand"><span class="chip"></span>lecimyszacunek</a>
-  <nav class="top-links">
-    <a href="/panel" class="active">Panel</a>
-    <a href="/zapis">Zapis</a>
-    <a href="/prognoza">Prognoza</a>
-  </nav>
-  <div class="top-right">
-    <div class="cur-switch" id="curSwitch"></div>
-    <a href="/logout" class="signout" style="text-decoration:none;font-size:13px">Wyloguj</a>
+<aside class="side" id="side"></aside>
+<header class="top" id="topbar"></header>
+
+<main class="wide">
+
+  <div class="dash">
+
+    <!-- ===== lewa kolumna ===== -->
+    <div class="col">
+
+      <section class="panel">
+        <div class="panel-title"><span class="ttl"><i data-ico="target"></i>Dzienny cel</span></div>
+
+        <div class="goal-grid">
+          <div>
+            <p class="mini-label">Cel na dziś</p>
+            <div class="big num" id="goalPct">—</div>
+            <p class="sub num" id="goalPln"></p>
+          </div>
+          <div>
+            <p class="mini-label">Twój wynik dziś</p>
+            <div class="big num flat" id="todayPct">—</div>
+            <p class="sub num" id="todayPl"></p>
+          </div>
+        </div>
+
+        <div class="track"><div class="fill" id="goalFill"></div></div>
+        <div class="prog-row">
+          <span class="mini-label">Postęp do celu</span>
+          <span class="prog-val num" id="progressPct">—</span>
+        </div>
+        <p class="goal-status" id="goalStatus">ładowanie danych…</p>
+
+        <form class="addbox" onsubmit="event.preventDefault(); submitPct();">
+          <label for="pctInput">Dodaj wynik dnia</label>
+          <div class="addrow">
+            <div class="pct-field">
+              <input class="field" type="number" step="0.01" id="pctInput" placeholder="Zysk / strata, np. 2.37 albo -1.10" oninput="previewPct()">
+              <span>%</span>
+            </div>
+            <button class="btn gold" type="submit">Zapisz</button>
+          </div>
+          <p class="field-hint" id="pctHint">Procent liczy się od obecnego kapitału i zapisuje jako transakcja. Rynek i notatkę dodasz na stronie Zapis.</p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title chart-head">
+          <span class="ttl"><i data-ico="bars"></i>Wynik kapitału</span>
+          <div class="seg" id="periodSeg" role="group" aria-label="Okres wykresu"></div>
+        </div>
+        <p class="chart-sum" id="chartSum"></p>
+        <div class="chart-box">
+          <canvas id="perfChart" role="img" aria-label="Wynik z transakcji w wybranym okresie, w procentach kapitału"></canvas>
+          <p class="chart-empty" id="chartEmpty">Brak transakcji w tym okresie.</p>
+        </div>
+      </section>
+
+      <div class="pair">
+        <section class="panel">
+          <div class="panel-title"><span class="ttl"><i data-ico="clipboard"></i>Dzienny dziennik</span></div>
+          <div id="journal"></div>
+          <button type="button" class="btn ghost more-btn" onclick="document.getElementById('history').scrollIntoView({ behavior: 'smooth' })">Zobacz pełną historię</button>
+        </section>
+
+        <section class="panel stats-card">
+          <div class="panel-title"><span class="ttl"><i data-ico="pie"></i>Statystyki</span></div>
+          <div class="stat-grid" id="statGrid"></div>
+          <div class="top-markets">
+            <p class="mini-label">Najczęściej grane</p>
+            <div class="chips" id="topMarkets"></div>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+    <!-- ===== prawa kolumna ===== -->
+    <div class="col">
+
+      <section class="panel">
+        <div class="panel-title"><span class="ttl"><i data-ico="zap"></i>Szybki podgląd</span></div>
+        <div id="quick"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><span class="ttl"><i data-ico="trend"></i>Projekcje przy obecnej płynności</span></div>
+        <p class="proj-note" id="projNote"></p>
+        <div id="projRows"></div>
+        <div class="proj-foot">
+          <span>To tylko prognoza — procent składany, wyniki mogą się znacząco różnić.</span>
+          <a href="/prognoza">Pełna prognoza</a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title"><span class="ttl"><i data-ico="note"></i>Szybkie notatki</span></div>
+        <textarea class="notes" id="notesInput" placeholder="Zapisz coś na dziś…" aria-label="Szybkie notatki"></textarea>
+        <button type="button" class="btn outline notes-btn" onclick="saveNotes()">Zapisz</button>
+      </section>
+
+    </div>
   </div>
-</header>
 
-<main>
+  <!-- ===== pod spodem: rynki, kalendarz, wynik wg rynku, historia ===== -->
+  <div class="below">
 
-  <section>
-    <div class="hero-row">
-      <div>
-        <p class="hero-label">Kapitał obecny</p>
-        <div class="hero-value num" id="capValue">— <svg class="spark" id="capSpark" width="90" height="30"></svg></div>
+    <div class="pair">
+      <section class="panel">
+        <div class="panel-title"><span class="ttl"><i data-ico="globe"></i>Rynki</span></div>
+        <div id="marketPanel"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <span class="ttl"><i data-ico="calendar"></i>Kalendarz wyników</span>
+          <div class="heat-legend">
+            strata <span class="cell" style="background:var(--bad)"></span><span class="cell" style="background:rgba(209,104,90,0.42)"></span><span class="cell" style="background:var(--line-soft)"></span><span class="cell" style="background:rgba(111,174,124,0.42)"></span><span class="cell" style="background:var(--good)"></span> zysk
+          </div>
+        </div>
+        <p class="mini-label" style="margin-top:-6px">Ostatnie 5 tygodni</p>
+        <div class="heatmap" id="heatmap"></div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title"><span class="ttl"><i data-ico="bars"></i>Wynik wg rynku</span></div>
+      <div class="table-scroll">
+        <table class="data-table" id="marketStatsTable">
+          <thead><tr><th>Rynek</th><th>Transakcje</th><th>Skuteczność</th><th>Wynik łączny</th></tr></thead>
+          <tbody id="marketStatsBody"></tbody>
+        </table>
       </div>
-    </div>
-    <p class="hero-delta" id="capDelta" style="margin-top:12px;font-size:14px;color:var(--ink-dim)">ładowanie danych…</p>
-  </section>
+    </section>
 
-  <hr class="rule">
-
-  <section class="panel">
-    <div class="panel-title">Rynki</div>
-    <div id="marketPanel"></div>
-  </section>
-
-  <hr class="rule">
-
-  <section>
-    <div class="goal-top">
-      <div class="goal-title">Cel na dziś <span>— 5% kapitału</span></div>
-      <div class="goal-num num" id="goalNum">—</div>
-    </div>
-    <div class="track"><div class="fill" id="goalFill"></div></div>
-    <p class="goal-status" id="goalStatus">—</p>
-  </section>
-
-  <hr class="rule">
-
-  <section class="stats">
-    <div class="stat">
-      <div class="stat-label">Dziś</div>
-      <div class="stat-val num" id="statToday">—</div>
-      <div class="stat-note" id="statTodayNote"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Ostatnie 7 dni</div>
-      <div class="stat-val num" id="stat7">—</div>
-      <div class="stat-note" id="stat7Note"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Seria</div>
-      <div class="stat-val num" id="statStreak">—</div>
-      <div class="stat-note" id="statStreakNote"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Skuteczność</div>
-      <div class="stat-val num" id="statWinrate">—</div>
-      <div class="stat-note" id="statWinrateNote"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Najlepszy dzień</div>
-      <div class="stat-val num up" id="statBest">—</div>
-      <div class="stat-note" id="statBestNote"></div>
-    </div>
-  </section>
-
-  <hr class="rule">
-
-  <section class="charts">
-    <div class="panel">
-      <div class="panel-title">Kapitał w czasie</div>
-      <div class="chart-box"><canvas id="capChart"></canvas></div>
-    </div>
-    <div class="panel">
-      <div class="panel-title">Wynik dzienny — ostatnie 14 dni</div>
-      <div class="chart-box"><canvas id="plChart"></canvas></div>
-    </div>
-  </section>
-
-  <hr class="rule">
-
-  <section class="panel">
-    <div class="panel-title">
-      <span>Kalendarz wyników — ostatnie 5 tygodni</span>
-      <div class="heat-legend">
-        strata <span class="cell" style="background:var(--bad)"></span><span class="cell" style="background:rgba(209,104,90,0.42)"></span><span class="cell" style="background:var(--line-soft)"></span><span class="cell" style="background:rgba(111,174,124,0.42)"></span><span class="cell" style="background:var(--good)"></span> zysk
+    <section class="panel" id="history">
+      <div class="history-head">
+        <span class="ttl"><i data-ico="list"></i>Historia wpisów</span>
+        <div class="history-actions">
+          <button class="undo" id="exportBtn" onclick="exportCsv()">Eksport CSV</button>
+          <button class="undo" id="undoBtn" onclick="undoLast()">Cofnij ostatni</button>
+        </div>
       </div>
-    </div>
-    <div class="heatmap" id="heatmap"></div>
-  </section>
+      <div id="historyList"><div class="empty">Brak wpisów.</div></div>
+    </section>
 
-  <hr class="rule">
-
-  <section class="panel">
-    <div class="panel-title">Wynik wg rynku</div>
-    <div class="table-scroll">
-      <table class="data-table" id="marketStatsTable">
-        <thead><tr><th>Rynek</th><th>Transakcje</th><th>Skuteczność</th><th>Wynik łączny</th></tr></thead>
-        <tbody id="marketStatsBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <hr class="rule">
-
-  <section class="panel">
-    <div class="history-head">
-      <div class="panel-title" style="margin-bottom:0">Historia wpisów</div>
-      <div class="history-actions">
-        <button class="undo" id="exportBtn" onclick="exportCsv()">Eksport CSV</button>
-        <button class="undo" id="undoBtn" onclick="undoLast()">Cofnij ostatni</button>
-      </div>
-    </div>
-    <div id="historyList"><div style="font-size:13px;color:var(--ink-faint);padding:30px 0;text-align:center">Brak wpisów.</div></div>
-  </section>
+  </div>
 
 </main>
 
 <script>
+  LYS.mountShell({ active: 'panel', title: 'Cześć, ' + LYS.USER_NAME, sub: 'Dziś też możesz to zrobić.' });
+
   const fmt = n => LYS.fmt(n);
   const fmtSigned = n => LYS.fmtSigned(n);
 
-  let state = { startingCapital: 0, currentCapital: 0, entries: [] };
-  let capChart, plChart;
+  const GOAL_PCT = 5;               // dzienny cel w % kapitału
+  const NOTES_KEY = 'lys_notes_v1';
+  const PERIOD_KEY = 'lys_period_v1';
 
-  function localDay(iso) {
-    const d = new Date(iso);
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
-  function todayKey() { return localDay(new Date().toISOString()); }
-  function daysAgoKey(n) { const d = new Date(); d.setDate(d.getDate() - n); return localDay(d.toISOString()); }
+  let state = { startingCapital: 0, currentCapital: 0, entries: [] };
+  let perfChart = null;
+  let goalLineVal = null;
 
   async function loadState() {
     try {
@@ -216,58 +319,493 @@
       state = await res.json();
       render();
     } catch (e) {
-      document.getElementById('capDelta').textContent = 'Nie udało się wczytać danych — zaloguj się ponownie.';
+      document.getElementById('goalStatus').textContent = 'Błąd ładowania — odśwież stronę.';
     }
   }
 
   function render() {
-    const cap = state.currentCapital;
-    document.getElementById('capValue').childNodes[0].textContent = fmt(cap) + ' ';
-    renderSpark();
-
-    const diff = cap - state.startingCapital;
-    const pct = state.startingCapital ? (diff / state.startingCapital * 100) : 0;
-    document.getElementById('capDelta').innerHTML =
-      `start ${fmt(state.startingCapital)} · <span class="${diff >= 0 ? 'up' : 'down'}">${fmtSigned(diff)} (${diff >= 0 ? '+' : ''}${pct.toFixed(1)}%)</span>`;
-
-    const target = cap * 0.05;
-    document.getElementById('goalNum').textContent = fmt(target);
-
-    const tKey = todayKey();
-    const todayTrades = state.entries.filter(e => e.type === 'trade' && localDay(e.date) === tKey);
-    const todayPL = todayTrades.reduce((s, e) => s + e.amount, 0);
-
-    const pct2 = target > 0 ? Math.max(0, Math.min(100, (todayPL / target) * 100)) : 0;
-    const fillEl = document.getElementById('goalFill');
-    fillEl.style.width = pct2 + '%';
-    fillEl.className = 'fill' + (todayPL < 0 ? ' under' : (todayPL >= target && target > 0 ? ' hit' : ''));
-
-    const statusEl = document.getElementById('goalStatus');
-    if (target > 0 && todayPL >= target) {
-      statusEl.textContent = 'Cel osiągnięty — nadwyżka ' + fmtSigned(todayPL - target);
-      statusEl.className = 'goal-status hit';
-    } else {
-      const remaining = target - todayPL;
-      statusEl.textContent = (todayPL < 0 ? 'Strata dziś — do celu ' : 'Zostało do celu ') + fmt(remaining);
-      statusEl.className = 'goal-status' + (todayPL < 0 ? ' under' : '');
-    }
-
-    function sumSince(daysBack) {
-      const keys = new Set();
-      for (let i = 0; i < daysBack; i++) keys.add(daysAgoKey(i));
-      return state.entries.filter(e => e.type === 'trade' && keys.has(localDay(e.date))).reduce((s, e) => s + e.amount, 0);
-    }
-    setStat('statToday', 'statTodayNote', todayPL, todayTrades.length + ' transakcji');
-    const keys7 = new Set(); for (let i = 0; i < 7; i++) keys7.add(daysAgoKey(i));
-    setStat('stat7', 'stat7Note', sumSince(7), state.entries.filter(e => e.type === 'trade' && keys7.has(localDay(e.date))).length + ' transakcji');
-
-    renderStreak();
-    renderWinrate();
-    renderBestDay();
-    renderHistory();
-    renderCharts();
+    renderGoal();
+    renderQuick();
+    renderProjections();
+    renderJournal();
+    renderStats(computeDays());
+    renderPerfChart();
     renderHeatmap();
     renderMarketStats();
+    renderHistory();
+  }
+
+  function localDay(d) {
+    const x = new Date(d);
+    return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+  }
+  function daysAgoKey(n) {
+    const d = new Date(); d.setDate(d.getDate() - n); return localDay(d);
+  }
+  function keyToShort(k) {
+    const [y, m, d] = k.split('-');
+    return d + '.' + m;
+  }
+  function cls(n) { return n > 0 ? 'up' : (n < 0 ? 'down' : 'flat'); }
+  function fmtPct(n, signed) {
+    if (n === null || n === undefined || !isFinite(n)) return '—';
+    const s = (signed && n > 0 ? '+' : '') + n.toFixed(2) + '%';
+    return s;
+  }
+  function plTrades(n) {
+    if (n === 1) return '1 transakcja';
+    if (n >= 2 && n <= 4) return n + ' transakcje';
+    return n + ' transakcji';
+  }
+  function escapeHtml(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function dailyPLMap() {
+    const map = {};
+    state.entries.filter(e => e.type === 'trade').forEach(e => {
+      const k = localDay(e.date);
+      map[k] = (map[k] || 0) + e.amount;
+    });
+    return map;
+  }
+
+  function computeDays() {
+    const map = dailyPLMap();
+    const keys = Object.keys(map).sort();
+    let bal = state.startingCapital;
+    // reconstruct day-by-day from entries order
+    const byDay = {};
+    state.entries.forEach(e => {
+      const k = localDay(e.date);
+      if (!byDay[k]) byDay[k] = { pl: 0, notes: [] };
+      if (e.type === 'trade') {
+        byDay[k].pl += e.amount;
+        if (e.note) byDay[k].notes.push(e.note);
+      }
+    });
+    // better: walk all entries chronologically to get opening balance per day for pct
+    const days = [];
+    const sortedKeys = Object.keys(byDay).sort();
+    let running = state.startingCapital;
+    // approximate: use balance after first trade of day vs start of day
+    const trades = state.entries.filter(e => e.type === 'trade');
+    const deposits = state.entries.filter(e => e.type === 'deposit');
+    // simpler approach matching original intent
+    const dayMap = {};
+    state.entries.forEach(e => {
+      const k = localDay(e.date);
+      if (!dayMap[k]) dayMap[k] = { pl: 0, notes: [], open: null };
+      if (e.type === 'trade') {
+        dayMap[k].pl += e.amount;
+        if (e.note) dayMap[k].notes.push(e.note);
+        if (dayMap[k].open === null) dayMap[k].open = e.balanceAfter - e.amount;
+      }
+    });
+    sortedKeys.forEach(k => {
+      const d = dayMap[k];
+      const open = d.open != null ? d.open : state.startingCapital;
+      const pct = open > 0 ? (d.pl / open) * 100 : 0;
+      days.push({ key: k, pl: d.pl, pct, notes: d.notes });
+    });
+    return { days, dayMap };
+  }
+
+  function renderGoal() {
+    const todayKey = localDay(new Date());
+    const tradesToday = state.entries.filter(e => e.type === 'trade' && localDay(e.date) === todayKey);
+    const pl = tradesToday.reduce((s, e) => s + e.amount, 0);
+    // approximate open capital today
+    let open = state.currentCapital - pl;
+    if (open <= 0) open = state.currentCapital || 1;
+    const pct = open > 0 ? (pl / open) * 100 : 0;
+    const goalPln = open * (GOAL_PCT / 100);
+
+    document.getElementById('goalPct').textContent = GOAL_PCT + '%';
+    document.getElementById('goalPln').textContent = '≈ ' + fmt(goalPln);
+
+    const todayEl = document.getElementById('todayPct');
+    todayEl.textContent = fmtPct(pct, true);
+    todayEl.className = 'big num ' + cls(pct);
+    document.getElementById('todayPl').textContent = fmtSigned(pl);
+
+    const prog = Math.min(150, Math.max(0, (pct / GOAL_PCT) * 100));
+    const fill = document.getElementById('goalFill');
+    fill.style.width = prog + '%';
+    fill.className = 'fill' + (pct >= GOAL_PCT ? ' hit' : (pct < 0 ? ' under' : ''));
+
+    document.getElementById('progressPct').textContent = Math.round(prog) + '%';
+    document.getElementById('progressPct').className = 'prog-val num ' + (pct >= GOAL_PCT ? 'up' : (pct < 0 ? 'down' : ''));
+
+    const st = document.getElementById('goalStatus');
+    if (tradesToday.length === 0) {
+      st.textContent = 'Jeszcze nic dziś nie zapisano.';
+      st.className = 'goal-status';
+    } else if (pct >= GOAL_PCT) {
+      st.textContent = 'Cel dnia osiągnięty. Dobra robota.';
+      st.className = 'goal-status hit';
+    } else if (pct < 0) {
+      st.textContent = 'Dziś na minusie — jutro nowa szansa.';
+      st.className = 'goal-status under';
+    } else {
+      st.textContent = 'Jeszcze ' + fmtPct(GOAL_PCT - pct) + ' do celu.';
+      st.className = 'goal-status';
+    }
+  }
+
+  function previewPct() {
+    const raw = parseFloat(document.getElementById('pctInput').value);
+    const hint = document.getElementById('pctHint');
+    if (isNaN(raw)) { hint.textContent = 'Procent liczy się od obecnego kapitału i zapisuje jako transakcja. Rynek i notatkę dodasz na stronie Zapis.'; hint.className = 'field-hint'; return; }
+    const amount = state.currentCapital * (raw / 100);
+    hint.textContent = '≈ ' + fmtSigned(amount) + ' (od kapitału ' + fmt(state.currentCapital) + ')';
+    hint.className = 'field-hint';
+  }
+
+  async function submitPct() {
+    const raw = parseFloat(document.getElementById('pctInput').value);
+    const hint = document.getElementById('pctHint');
+    if (isNaN(raw) || raw === 0) { hint.textContent = 'Podaj niezerowy procent.'; hint.className = 'field-hint err'; return; }
+    const amount = state.currentCapital * (raw / 100);
+    try {
+      const res = await fetch('/api/capital/entry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'trade', amount, note: raw + '%', market: '' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Błąd');
+      state = data;
+      document.getElementById('pctInput').value = '';
+      hint.textContent = 'Zapisano.';
+      hint.className = 'field-hint';
+      LYS.toast('Zapisano wynik dnia', 'ok');
+      render();
+    } catch (e) {
+      hint.textContent = e.message;
+      hint.className = 'field-hint err';
+      LYS.toast(e.message, 'err');
+    }
+  }
+
+  function renderQuick() {
+    const trades = state.entries.filter(e => e.type === 'trade');
+    const deposits = state.entries.filter(e => e.type === 'deposit');
+    const totalTrade = trades.reduce((s, e) => s + e.amount, 0);
+    const totalDep = deposits.reduce((s, e) => s + e.amount, 0);
+    const todayKey = localDay(new Date());
+    const todayPl = trades.filter(e => localDay(e.date) === todayKey).reduce((s, e) => s + e.amount, 0);
+
+    document.getElementById('quick').innerHTML = `
+      <div class="kv main"><span class="k">Kapitał</span><span class="v num">${fmt(state.currentCapital)}</span></div>
+      <div class="kv"><span class="k">Start</span><span class="v num">${fmt(state.startingCapital)}</span></div>
+      <div class="kv"><span class="k">Wynik tradingu</span><span class="v num ${cls(totalTrade)}">${fmtSigned(totalTrade)}</span></div>
+      <div class="kv"><span class="k">Dopłaty netto</span><span class="v num ${cls(totalDep)}">${fmtSigned(totalDep)}</span></div>
+      <div class="kv"><span class="k">Dziś</span><span class="v num ${cls(todayPl)}">${fmtSigned(todayPl)}</span></div>
+      <div class="kv"><span class="k">Transakcje</span><span class="v num">${trades.length}</span></div>
+    `;
+  }
+
+  function renderProjections() {
+    const trades = state.entries.filter(e => e.type === 'trade');
+    const days = computeDays().days;
+    let avgPct = 0;
+    if (days.length) avgPct = days.reduce((s, d) => s + d.pct, 0) / days.length;
+    else avgPct = 0;
+
+    const note = document.getElementById('projNote');
+    if (days.length < 3) {
+      note.textContent = 'Za mało danych — projekcje oparte o cel ' + GOAL_PCT + '% dziennie.';
+      avgPct = GOAL_PCT;
+    } else {
+      note.textContent = 'Średnia dzienna z ' + days.length + ' dni: ' + fmtPct(avgPct, true) + '. Projekcja zakłada tyle samo dni roboczych.';
+    }
+
+    const cap = state.currentCapital;
+    const horizons = [
+      { label: '7 dni roboczych', n: 7 },
+      { label: '21 dni roboczych', n: 21 },
+      { label: '60 dni roboczych', n: 60 }
+    ];
+    document.getElementById('projRows').innerHTML = horizons.map(h => {
+      const final = cap * Math.pow(1 + avgPct / 100, h.n);
+      const gain = final - cap;
+      return `<div class="proj-row">
+        <div><div class="proj-lab">${h.label}</div><div class="proj-pct num ${cls(avgPct)}">${fmtPct(avgPct * h.n / 1, true)}</div></div>
+        <div class="proj-amt num ${cls(gain)}">${fmt(final)}<br><small>${fmtSigned(gain)}</small></div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderJournal() {
+    const c = computeDays();
+    const recent = [...c.days].reverse().slice(0, 7);
+    const el = document.getElementById('journal');
+    if (recent.length === 0) {
+      el.innerHTML = '<div class="empty">Brak wpisów w dzienniku.</div>';
+      return;
+    }
+    el.innerHTML = `<table class="data-table jr"><thead><tr><th>Dzień</th><th>%</th><th>PLN</th><th>Notatka</th></tr></thead><tbody>` +
+      recent.map(d => {
+        const k = cls(d.pct);
+        const note = d.notes.length ? escapeHtml(d.notes[0]) : '—';
+        return `<tr>
+          <td><span class="dot ${k}"></span>${keyToShort(d.key)}</td>
+          <td class="num ${k}">${fmtPct(d.pct, true)}</td>
+          <td class="num ${k}">${fmtSigned(d.pl)}</td>
+          <td class="note" title="${d.notes.map(escapeHtml).join(' | ')}">${note}</td>
+        </tr>`;
+      }).join('') + `</tbody></table>`;
+  }
+
+  function currentStreak() {
+    const map = dailyPLMap();
+    let i = 0, streak = 0, sign = 0;
+    while (i < 400) {
+      const k = daysAgoKey(i);
+      if (!(k in map) || map[k] === 0) { if (i === 0) { i++; continue; } break; }
+      const s = map[k] > 0 ? 1 : -1;
+      if (sign === 0) sign = s;
+      if (s !== sign) break;
+      streak++; i++;
+    }
+    return { streak, sign };
+  }
+
+  function renderStats(c) {
+    const days = c.days;
+    const n = days.length;
+    const trades = state.entries.filter(e => e.type === 'trade');
+    const totalWin = trades.filter(e => e.amount > 0).reduce((s, e) => s + e.amount, 0);
+    const totalLoss = trades.filter(e => e.amount < 0).reduce((s, e) => s + e.amount, 0);
+    const wins = trades.filter(e => e.amount > 0).length;
+    const winDays = days.filter(d => d.pl > 0).length;
+    const avg = n ? days.reduce((s, d) => s + d.pct, 0) / n : null;
+    let best = null, worst = null;
+    days.forEach(d => { if (!best || d.pct > best.pct) best = d; if (!worst || d.pct < worst.pct) worst = d; });
+
+    const keys7 = new Set(); for (let i = 0; i < 7; i++) keys7.add(daysAgoKey(i));
+    const t7 = trades.filter(e => keys7.has(localDay(e.date)));
+    const sum7 = t7.reduce((s, e) => s + e.amount, 0);
+    const { streak, sign } = currentStreak();
+
+    const cell = (l, v, k, note) => `<div class="stat-cell"><div class="l">${l}</div><div class="v num ${k || ''}">${v}</div>${note ? `<div class="n">${note}</div>` : ''}</div>`;
+    document.getElementById('statGrid').innerHTML = [
+      cell('Średnia dzienna', avg === null ? '—' : fmtPct(avg, true), avg === null ? 'flat' : cls(avg), n ? 'z ' + n + ' dni' : ''),
+      cell('Najlepszy dzień', best ? fmtPct(best.pct, true) : '—', best ? cls(best.pct) : 'flat', best ? keyToShort(best.key) : ''),
+      cell('Najgorszy dzień', worst ? fmtPct(worst.pct, true) : '—', worst ? cls(worst.pct) : 'flat', worst ? keyToShort(worst.key) : ''),
+      cell('Zyskownych dni', n ? winDays + ' / ' + n : '—', n ? '' : 'flat', n ? Math.round(winDays / n * 100) + '%' : ''),
+      cell('Łączny zysk', trades.length ? fmtSigned(totalWin) : '—', totalWin > 0 ? 'up' : 'flat'),
+      cell('Łączna strata', trades.length ? fmtSigned(totalLoss) : '—', totalLoss < 0 ? 'down' : 'flat'),
+      cell('Skuteczność', trades.length ? Math.round(wins / trades.length * 100) + '%' : '—', trades.length ? (wins / trades.length >= 0.5 ? 'up' : 'down') : 'flat', trades.length ? wins + ' z ' + trades.length + ' na plusie' : ''),
+      cell('Ostatnie 7 dni', fmtSigned(sum7), cls(sum7), plTrades(t7.length)),
+      cell('Seria', streak ? streak + (streak === 1 ? ' dzień' : ' dni') : '—', streak ? (sign > 0 ? 'up' : 'down') : 'flat', streak ? (sign > 0 ? 'na plusie' : 'na minusie') : '')
+    ].join('');
+
+    const counts = {};
+    trades.forEach(e => { const m = (e.market || '').trim(); if (m) counts[m] = (counts[m] || 0) + 1; });
+    const top = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 4);
+    document.getElementById('topMarkets').innerHTML = top.length
+      ? top.map(m => `<span class="chip-btn">${escapeHtml(m)} · ${counts[m]}</span>`).join('')
+      : '<span style="font-size:12px;color:var(--ink-faint)">Dodawaj tag rynku przy zapisie transakcji.</span>';
+  }
+
+  const PERIODS = [
+    { id: 'day',   label: 'Dzień' },
+    { id: 'week',  label: 'Tydzień',    days: 7 },
+    { id: 'month', label: 'Miesiąc',    days: 30 },
+    { id: 'q',     label: '3 miesiące', days: 90 },
+    { id: 'year',  label: 'Rok',        days: 365 },
+    { id: 'all',   label: 'Wszystko' }
+  ];
+  let period = (function () { try { return localStorage.getItem(PERIOD_KEY) || 'day'; } catch (e) { return 'day'; } })();
+  if (!PERIODS.some(p => p.id === period)) period = 'day';
+
+  function paintPeriodSeg() {
+    const seg = document.getElementById('periodSeg');
+    seg.innerHTML = PERIODS.map(p => `<button type="button" class="${p.id === period ? 'on' : ''}" data-id="${p.id}" aria-pressed="${p.id === period}">${p.label}</button>`).join('');
+    seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      period = b.dataset.id;
+      try { localStorage.setItem(PERIOD_KEY, period); } catch (e) {}
+      paintPeriodSeg();
+      renderPerfChart();
+    }));
+  }
+
+  function makeTicks(min, max, isDay) {
+    const out = [];
+    if (isDay) {
+      const hours = Math.max(1, Math.ceil((max - min) / 3600e3 / 6));
+      const d = new Date(min); d.setMinutes(0, 0, 0);
+      let t = d.getTime();
+      while (t < min) t += 3600e3;
+      for (; t <= max; t += hours * 3600e3) out.push(t);
+    } else {
+      const d = new Date(min); d.setHours(0, 0, 0, 0);
+      const spanDays = Math.max(1, Math.round((max - min) / 86400e3));
+      const step = Math.max(1, Math.ceil(spanDays / 6));
+      for (const t = new Date(d); t.getTime() <= max; t.setDate(t.getDate() + step)) out.push(t.getTime());
+    }
+    return out;
+  }
+
+  const goalLabelPlugin = {
+    id: 'goalLabel',
+    afterDatasetsDraw(chart) {
+      if (goalLineVal === null) return;
+      const { ctx, chartArea, scales } = chart;
+      const y = scales.y.getPixelForValue(goalLineVal);
+      if (y < chartArea.top || y > chartArea.bottom) return;
+      ctx.save();
+      ctx.fillStyle = 'rgba(230,189,106,0.85)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('Cel dnia ' + fmtPct(goalLineVal), chartArea.right - 6, y - 6);
+      ctx.restore();
+    }
+  };
+
+  function renderPerfChart() {
+    const p = PERIODS.find(x => x.id === period) || PERIODS[0];
+    const isDay = p.id === 'day';
+    const allTrades = state.entries.filter(e => e.type === 'trade');
+    const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+
+    let start = midnight.getTime();
+    if (p.days) { const d = new Date(midnight); d.setDate(d.getDate() - (p.days - 1)); start = d.getTime(); }
+    if (p.id === 'all' && allTrades.length) { const d = new Date(allTrades[0].date); d.setHours(0, 0, 0, 0); start = d.getTime(); }
+
+    const now = Date.now();
+    const trades = allTrades.filter(e => new Date(e.date).getTime() >= start);
+    const baseline = trades.length ? trades[0].balanceAfter - trades[0].amount : state.currentCapital;
+
+    let xMin = start, xMax = now;
+    if (isDay) {
+      const firstT = trades.length ? new Date(trades[0].date).getTime() - 30 * 60e3 : Infinity;
+      xMin = Math.max(start, Math.min(start + 8 * 3600e3, firstT, now - 3600e3));
+      xMax = Math.max(start + 20 * 3600e3, now);
+    }
+
+    let cum = 0;
+    const pts = [{ x: xMin, y: 0, pl: 0 }];
+    trades.forEach(e => {
+      cum += e.amount;
+      pts.push({ x: new Date(e.date).getTime(), y: baseline > 0 ? cum / baseline * 100 : 0, pl: cum });
+    });
+    const last = pts[pts.length - 1];
+    pts.push({ x: Math.max(now, last.x), y: last.y, pl: last.pl });
+
+    const sum = document.getElementById('chartSum');
+    if (trades.length) {
+      sum.innerHTML = `${p.id === 'all' ? 'Cały okres' : p.label}: <span class="${cls(last.pl)}">${fmtPct(last.y, true)} (${fmtSigned(last.pl)})</span> · ${plTrades(trades.length)}`;
+    } else {
+      sum.textContent = '';
+    }
+    document.getElementById('chartEmpty').classList.toggle('show', trades.length === 0);
+
+    const up = last.y >= 0;
+    const col = up ? '#6fae7c' : '#d1685a';
+    const colRgb = up ? '111,174,124' : '209,104,90';
+    const ys = pts.map(q => q.y);
+    goalLineVal = isDay ? GOAL_PCT : null;
+    const yMax = Math.max(...ys, goalLineVal || 0);
+    const yMin = Math.min(...ys, 0);
+    const pad = Math.max((yMax - yMin) * 0.12, 0.4);
+
+    const datasets = [{
+      data: pts,
+      parsing: false,
+      borderColor: col,
+      borderWidth: 2,
+      tension: 0.15,
+      fill: 'origin',
+      backgroundColor: c => {
+        const a = c.chart.chartArea;
+        if (!a) return 'transparent';
+        const g = c.chart.ctx.createLinearGradient(0, a.top, 0, a.bottom);
+        g.addColorStop(0, `rgba(${colRgb},0.30)`);
+        g.addColorStop(1, `rgba(${colRgb},0)`);
+        return g;
+      },
+      pointRadius: pts.map((_, i) => i === pts.length - 1 ? 4 : (pts.length <= 14 ? 2.5 : 0)),
+      pointBackgroundColor: col,
+      pointBorderColor: '#0e1a19',
+      pointBorderWidth: 1.5,
+      pointHitRadius: 12
+    }];
+    if (isDay) {
+      datasets.push({
+        data: [{ x: xMin, y: GOAL_PCT }, { x: xMax, y: GOAL_PCT }],
+        parsing: false, borderColor: 'rgba(209,162,74,0.7)', borderDash: [6, 5], borderWidth: 1.5,
+        pointRadius: 0, pointHitRadius: 0, fill: false
+      });
+    }
+
+    const tickColor = 'rgba(242,239,230,0.35)';
+    if (perfChart) perfChart.destroy();
+    perfChart = new Chart(document.getElementById('perfChart'), {
+      type: 'line',
+      data: { datasets },
+      plugins: [goalLabelPlugin],
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'nearest', intersect: false, axis: 'x' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            filter: item => item.datasetIndex === 0,
+            backgroundColor: '#101d1c', borderColor: 'rgba(242,239,230,0.12)', borderWidth: 1,
+            titleColor: '#93a39d', bodyColor: '#f2efe6', padding: 10, displayColors: false,
+            callbacks: {
+              title: items => {
+                const d = new Date(items[0].raw.x);
+                return isDay ? d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+                             : d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+              },
+              label: c => [fmtPct(c.raw.y, true), fmtSigned(c.raw.pl)]
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear', min: xMin, max: xMax,
+            afterBuildTicks: axis => { axis.ticks = makeTicks(xMin, xMax, isDay).map(v => ({ value: v })); },
+            ticks: {
+              color: tickColor, maxRotation: 0, font: { family: 'Inter' },
+              callback: v => {
+                const d = new Date(v);
+                if (isDay) return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+                const long = (xMax - xMin) > 200 * 86400e3;
+                return d.toLocaleDateString('pl-PL', long ? { month: '2-digit', year: '2-digit' } : { day: '2-digit', month: '2-digit' });
+              }
+            },
+            grid: { color: 'rgba(242,239,230,0.05)' }
+          },
+          y: {
+            suggestedMin: yMin - pad, suggestedMax: yMax + pad,
+            ticks: { color: tickColor, font: { family: 'Inter' }, callback: v => v.toLocaleString('pl-PL', { maximumFractionDigits: 1 }) + '%' },
+            grid: { color: ctx => ctx.tick.value === 0 ? 'rgba(242,239,230,0.16)' : 'rgba(242,239,230,0.05)' }
+          }
+        }
+      }
+    });
+  }
+
+  function renderHeatmap() {
+    const map = dailyPLMap();
+    const total = 35;
+    const vals = [];
+    for (let i = total - 1; i >= 0; i--) { const k = daysAgoKey(i); vals.push({ k, v: map[k] || 0 }); }
+    const maxAbs = Math.max(1, ...vals.map(x => Math.abs(x.v)));
+    document.getElementById('heatmap').innerHTML = vals.map(x => {
+      let level = 0;
+      if (x.v !== 0) {
+        const ratio = Math.abs(x.v) / maxAbs;
+        const step = ratio > 0.66 ? 3 : (ratio > 0.33 ? 2 : 1);
+        level = x.v > 0 ? step : -step;
+      }
+      const tip = keyToShort(x.k) + ': ' + (x.v === 0 ? 'brak wpisów' : fmtSigned(x.v));
+      return `<div class="cell" data-level="${level}" data-tip="${tip}"></div>`;
+    }).join('');
   }
 
   function renderMarketStats() {
@@ -298,113 +836,11 @@
     }).join('');
   }
 
-  function setStat(valId, noteId, val, note) {
-    const el = document.getElementById(valId);
-    el.textContent = fmtSigned(val);
-    el.className = 'stat-val num ' + (val > 0 ? 'up' : (val < 0 ? 'down' : 'flat'));
-    if (noteId) document.getElementById(noteId).textContent = note;
-  }
-
-  // ---------- dzienne sumy P/L, posortowane rosnąco po dacie ----------
-  function dailyPLMap() {
-    const map = {};
-    state.entries.filter(e => e.type === 'trade').forEach(e => {
-      const k = localDay(e.date);
-      map[k] = (map[k] || 0) + e.amount;
-    });
-    return map;
-  }
-
-  function renderStreak() {
-    const map = dailyPLMap();
-    let i = 0, streak = 0, sign = 0;
-    // cofamy się dzień po dniu od dziś, licząc tylko dni z jakimikolwiek transakcjami
-    while (i < 400) {
-      const k = daysAgoKey(i);
-      if (!(k in map) || map[k] === 0) { if (i === 0) { i++; continue; } break; }
-      const s = map[k] > 0 ? 1 : -1;
-      if (sign === 0) sign = s;
-      if (s !== sign) break;
-      streak++; i++;
-    }
-    const el = document.getElementById('statStreak');
-    const note = document.getElementById('statStreakNote');
-    if (streak === 0) {
-      el.textContent = '—'; el.className = 'stat-val num flat'; note.textContent = 'brak danych';
-    } else {
-      el.textContent = streak + (streak === 1 ? ' dzień' : ' dni');
-      el.className = 'stat-val num ' + (sign > 0 ? 'up' : 'down');
-      note.textContent = sign > 0 ? 'z rzędu na plusie' : 'z rzędu na minusie';
-    }
-  }
-
-  function renderWinrate() {
-    const trades = state.entries.filter(e => e.type === 'trade');
-    const wins = trades.filter(e => e.amount > 0).length;
-    const el = document.getElementById('statWinrate');
-    const note = document.getElementById('statWinrateNote');
-    if (trades.length === 0) { el.textContent = '—'; el.className = 'stat-val num flat'; note.textContent = 'brak transakcji'; return; }
-    const pct = (wins / trades.length) * 100;
-    el.textContent = pct.toFixed(0) + '%';
-    el.className = 'stat-val num ' + (pct >= 50 ? 'up' : 'down');
-    note.textContent = wins + ' z ' + trades.length + ' na plusie';
-  }
-
-  function renderBestDay() {
-    const map = dailyPLMap();
-    const keys = Object.keys(map);
-    const el = document.getElementById('statBest');
-    const note = document.getElementById('statBestNote');
-    if (keys.length === 0) { el.textContent = '—'; note.textContent = ''; return; }
-    let bestKey = keys[0];
-    keys.forEach(k => { if (map[k] > map[bestKey]) bestKey = k; });
-    el.textContent = fmtSigned(map[bestKey]);
-    note.textContent = new Date(bestKey).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
-
-  function renderHeatmap() {
-    const map = dailyPLMap();
-    const days = 35;
-    const vals = [];
-    for (let i = days - 1; i >= 0; i--) { const k = daysAgoKey(i); vals.push({ k, v: map[k] || 0 }); }
-    const maxAbs = Math.max(1, ...vals.map(x => Math.abs(x.v)));
-    const el = document.getElementById('heatmap');
-    el.innerHTML = vals.map(x => {
-      let level = 0;
-      if (x.v !== 0) {
-        const ratio = Math.abs(x.v) / maxAbs;
-        const step = ratio > 0.66 ? 3 : (ratio > 0.33 ? 2 : 1);
-        level = x.v > 0 ? step : -step;
-      }
-      const d = new Date(x.k);
-      const label = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
-      const tip = label + ': ' + (x.v === 0 ? 'brak wpisów' : fmtSigned(x.v));
-      return `<div class="cell" data-level="${level}" data-tip="${tip}"></div>`;
-    }).join('');
-  }
-
-  function renderSpark() {
-    const svg = document.getElementById('capSpark');
-    const points = [state.startingCapital].concat(state.entries.map(e => e.balanceAfter)).slice(-20);
-    if (points.length < 2) { svg.innerHTML = ''; return; }
-    const w = 90, h = 30, pad = 3;
-    const min = Math.min(...points), max = Math.max(...points);
-    const range = (max - min) || 1;
-    const stepX = (w - pad * 2) / (points.length - 1);
-    const path = points.map((p, i) => {
-      const x = pad + i * stepX;
-      const y = h - pad - ((p - min) / range) * (h - pad * 2);
-      return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
-    }).join(' ');
-    const rising = points[points.length - 1] >= points[0];
-    svg.innerHTML = `<path d="${path}" fill="none" stroke="${rising ? '#6fae7c' : '#d1685a'}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
-  }
-
   function renderHistory() {
     const list = document.getElementById('historyList');
     const entries = [...state.entries].reverse().slice(0, 60);
     document.getElementById('undoBtn').disabled = state.entries.length === 0;
-    if (entries.length === 0) { list.innerHTML = '<div style="font-size:13px;color:var(--ink-faint);padding:30px 0;text-align:center">Brak wpisów.</div>'; return; }
+    if (entries.length === 0) { list.innerHTML = '<div class="empty">Brak wpisów.</div>'; return; }
     list.innerHTML = entries.map(e => {
       const d = new Date(e.date);
       const dateStr = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
@@ -416,58 +852,6 @@
         <div class="amt num ${e.amount >= 0 ? 'up' : 'down'}">${fmtSigned(e.amount)}</div>
       </div>`;
     }).join('');
-  }
-  function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-  function renderCharts() {
-    const points = [{ x: 0, y: state.startingCapital, label: 'start' }].concat(
-      state.entries.map((e, i) => ({ x: i + 1, y: e.balanceAfter, label: localDay(e.date) }))
-    );
-    const capCtx = document.getElementById('capChart');
-    if (capChart) capChart.destroy();
-    capChart = new Chart(capCtx, {
-      type: 'line',
-      data: {
-        labels: points.map(p => p.label),
-        datasets: [{
-          data: points.map(p => p.y),
-          borderColor: '#d1a24a',
-          backgroundColor: 'rgba(209,162,74,0.08)',
-          fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
-        scales: {
-          x: { ticks: { color: 'rgba(242,239,230,0.3)', maxTicksLimit: 6, font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } },
-          y: { ticks: { color: 'rgba(242,239,230,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } }
-        }
-      }
-    });
-
-    const dayMap = {};
-    for (let i = 13; i >= 0; i--) dayMap[daysAgoKey(i)] = 0;
-    state.entries.filter(e => e.type === 'trade').forEach(e => {
-      const k = localDay(e.date);
-      if (k in dayMap) dayMap[k] += e.amount;
-    });
-    const labels = Object.keys(dayMap).map(k => k.slice(5));
-    const vals = Object.values(dayMap);
-    const plCtx = document.getElementById('plChart');
-    if (plChart) plChart.destroy();
-    plChart = new Chart(plCtx, {
-      type: 'bar',
-      data: { labels, datasets: [{ data: vals, backgroundColor: vals.map(v => v >= 0 ? '#6fae7c' : '#d1685a'), borderRadius: 3 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt(c.parsed.y) } } },
-        scales: {
-          x: { ticks: { color: 'rgba(242,239,230,0.3)', font: { family: 'Inter' } }, grid: { display: false } },
-          y: { ticks: { color: 'rgba(242,239,230,0.3)', callback: v => fmt(v), font: { family: 'Inter' } }, grid: { color: 'rgba(242,239,230,0.05)' } }
-        }
-      }
-    });
   }
 
   async function undoLast() {
@@ -501,7 +885,19 @@
     LYS.toast('Wyeksportowano CSV', 'ok');
   }
 
-  LYS.renderCurrencySwitcher(document.getElementById('curSwitch'), () => render());
+  function loadNotes() {
+    try { document.getElementById('notesInput').value = localStorage.getItem(NOTES_KEY) || ''; } catch (e) {}
+  }
+  function saveNotes() {
+    try {
+      localStorage.setItem(NOTES_KEY, document.getElementById('notesInput').value);
+      LYS.toast('Notatka zapisana', 'ok');
+    } catch (e) { LYS.toast('Nie udało się zapisać notatki', 'err'); }
+  }
+
+  paintPeriodSeg();
+  loadNotes();
+  LYS.renderCurrencySwitcher(document.getElementById('curSwitch'), () => { render(); previewPct(); });
   LYS.renderMarketPanel(document.getElementById('marketPanel'));
   loadState();
 </script>
