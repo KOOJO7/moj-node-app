@@ -34,18 +34,8 @@
 </head>
 <body>
 
-<header class="top">
-  <a href="/panel" class="brand"><span class="chip"></span>lecimyszacunek</a>
-  <nav class="top-links">
-    <a href="/panel">Panel</a>
-    <a href="/zapis" class="active">Zapis</a>
-    <a href="/prognoza">Prognoza</a>
-  </nav>
-  <div class="top-right">
-    <div class="cur-switch" id="curSwitch"></div>
-    <a href="/logout" class="signout" style="text-decoration:none;font-size:13px">Wyloguj</a>
-  </div>
-</header>
+<aside class="side" id="side"></aside>
+<header class="top" id="topbar"></header>
 
 <main>
 
@@ -101,6 +91,7 @@
 </main>
 
 <script>
+  LYS.mountShell({ active: 'zapis', title: 'Zapis', sub: 'Zamknięta transakcja albo dopłata — panel przeliczy resztę.' });
   const fmt = n => LYS.fmt(n);
   const fmtSigned = n => LYS.fmtSigned(n);
 
