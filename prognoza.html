@@ -55,18 +55,8 @@
 </head>
 <body>
 
-<header class="top">
-  <a href="/panel" class="brand"><span class="chip"></span>lecimyszacunek</a>
-  <nav class="top-links">
-    <a href="/panel">Panel</a>
-    <a href="/zapis">Zapis</a>
-    <a href="/prognoza" class="active">Prognoza</a>
-  </nav>
-  <div class="top-right">
-    <div class="cur-switch" id="curSwitch"></div>
-    <a href="/logout" class="signout" style="text-decoration:none;font-size:13px">Wyloguj</a>
-  </div>
-</header>
+<aside class="side" id="side"></aside>
+<header class="top" id="topbar"></header>
 
 <main>
 
@@ -160,6 +150,7 @@
 </main>
 
 <script>
+  LYS.mountShell({ active: 'prognoza', title: 'Prognoza', sub: 'Ile urośnie kapitał przy stałym dziennym wyniku.' });
   const fmt = n => LYS.fmt(n);
   let growthChart;
   let lastTradingDays = [], lastStartCap = 0, lastRate = 0;
