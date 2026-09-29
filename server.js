@@ -41,6 +41,7 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'same-origin');
     next();
+    
 });
 
 function requireAuthPage(req, res, next) {
@@ -410,6 +411,9 @@ app.get('/', (req, res) => {
 app.get('/panel', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'panel.html')));
 app.get('/zapis', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'zapis.html')));
 app.get('/prognoza', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'prognoza.html')));
+app.get('/julcia.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'julcia.html'));
+});
 
 app.post('/login', loginRateLimited, (req, res) => {
     const ip = req.ip || 'unknown';
