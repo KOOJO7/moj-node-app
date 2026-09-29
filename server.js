@@ -68,7 +68,7 @@ const PUBLIC_FILES = new Set([
     '/pusheen4.png',
     '/pusheen5.png',
     '/pusheen6.png',
-    'att.GW6FYrCmXKO6OgnxWBtsvvtJ1AOoXiRUrpIBLQWwHV4.jpeg'
+    '/att.GW6FYrCmXKO6OgnxWBtsvvtJ1AOoXiRUrpIBLQWwHV4.jpeg'
 ]);
 app.use((req, res, next) => {
     if (req.method === 'GET' && PUBLIC_FILES.has(req.path)) {
