@@ -469,23 +469,15 @@ app.get('/nie-wybaczam.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'nie-wybaczam.html'));
 });
 
-app.post('/login', loginRateLimited, (req, res) => {
+app.post('/julcia-login', loginRateLimited, (req, res) => {
     const ip = req.ip || 'unknown';
     const pass = req.body && req.body.pass;
 
-    if (typeof pass === 'string' && pass.length > 0 &&
-        timingSafeEquals(pass, ADMIN_PASSWORD)) {
-
+    if (pass === 'kochamkonrada') {
         loginAttempts.delete(ip);
+        req.session.julciaAuthenticated = true;
 
-        req.session.regenerate(err => {
-            if (err) return res.sendStatus(500);
-
-            req.session.authenticated = true;
-            res.sendStatus(200);
-        });
-
-        return;
+        return res.sendStatus(200);
     }
 
     const rec = loginAttempts.get(ip) || {
@@ -496,7 +488,7 @@ app.post('/login', loginRateLimited, (req, res) => {
     rec.count += 1;
     loginAttempts.set(ip, rec);
 
-    res.sendStatus(401);
+    return res.sendStatus(401);
 });
 
 app.get('/logout', (req, res) => {
