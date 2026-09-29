@@ -779,23 +779,28 @@
 
   julciaForm.addEventListener(
     'submit',
-    (event) => {
+    async (event) => {
 
       event.preventDefault();
 
-      const response = await fetch('/julcia-login', {
+      const pass = julciaPassword.value;
+
+      try {
+
+        const response = await fetch('/julcia-login', {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ pass: password })
-      });
-      
-      if (response.ok) {
+          body: JSON.stringify({
+            pass: pass
+          })
+        });
+
+        if (response.ok) {
           window.location.href = '/julcia.html';
-      } else {
-          // tutaj pokaż błędne hasło
-      }
+          return;
+        }
 
         julciaError.classList.add('show');
 
@@ -804,6 +809,16 @@
 
         setTimeout(() => {
           julciaError.classList.remove('show');
+        }, 2500);
+
+      } catch (error) {
+
+        julciaError.textContent = 'Błąd połączenia z serwerem.';
+        julciaError.classList.add('show');
+
+        setTimeout(() => {
+          julciaError.classList.remove('show');
+          julciaError.textContent = 'Złe hasło.';
         }, 2500);
 
       }
