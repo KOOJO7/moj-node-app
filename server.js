@@ -413,6 +413,13 @@ app.get('/zapis', requireAuthPage, (req, res) => res.sendFile(path.join(__dirnam
 app.get('/prognoza', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'prognoza.html')));
 app.get('/julcia.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'julcia.html'));
+app.get('/wybaczam.html', requireJulciaAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'wybaczam.html'));
+});
+
+app.get('/nie-wybaczam.html', requireJulciaAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'nie-wybaczam.html'));
+});
 });
 
 app.post('/login', loginRateLimited, (req, res) => {
