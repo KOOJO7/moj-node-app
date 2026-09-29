@@ -783,13 +783,19 @@
 
       event.preventDefault();
 
-      const password = julciaPassword.value;
-
-      if (password === 'kochamkonrada') {
-
-        window.location.href = '/julcia.html';
-
+      const response = await fetch('/julcia-login', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pass: password })
+      });
+      
+      if (response.ok) {
+          window.location.href = '/julcia.html';
       } else {
+          // tutaj pokaż błędne hasło
+      }
 
         julciaError.classList.add('show');
 
