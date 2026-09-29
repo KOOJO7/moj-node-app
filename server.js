@@ -77,6 +77,17 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use((req, res, next) => {
+    if (
+        req.method === 'GET' &&
+        /\.(png|jpg|jpeg|gif|webp)$/i.test(req.path)
+    ) {
+        return res.sendFile(path.join(__dirname, req.path));
+    }
+
+    next();
+});
+
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 8;
 const loginAttempts = new Map();
