@@ -58,7 +58,17 @@ function requireAuthApi(req, res, next) {
     return res.status(401).json({ error: 'Brak autoryzacji' });
 }
 
-const PUBLIC_FILES = new Set(['/style.css', '/icon.png', '/app.js']);
+const PUBLIC_FILES = new Set([
+    '/style.css',
+    '/icon.png',
+    '/app.js',
+    '/pusheen1.png',
+    '/pusheen2.png',
+    '/pusheen3.png',
+    '/pusheen4.png',
+    '/pusheen5.png',
+    '/pusheen6.png'
+]);
 app.use((req, res, next) => {
     if (req.method === 'GET' && PUBLIC_FILES.has(req.path)) {
         return res.sendFile(path.join(__dirname, req.path));
