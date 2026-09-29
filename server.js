@@ -406,6 +406,17 @@ app.get('/api/market/:code', requireAuthApi, async (req, res) => {
     }
 });
 
+function requireJulciaAuth(req, res, next) {
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
+
+    if (req.session && req.session.julciaAuthenticated) {
+        return next();
+    }
+
+    return res.redirect('/');
+}
+
+
 // ─── STRONY ────────────────────────────────────────────────
 app.get('/', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -415,8 +426,10 @@ app.get('/', (req, res) => {
 app.get('/panel', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'panel.html')));
 app.get('/zapis', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'zapis.html')));
 app.get('/prognoza', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'prognoza.html')));
-app.get('/julcia.html', (req, res) => {
+app.get('/julcia.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'julcia.html'));
+});
+
 app.get('/wybaczam.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'wybaczam.html'));
 });
@@ -424,6 +437,7 @@ app.get('/wybaczam.html', requireJulciaAuth, (req, res) => {
 app.get('/nie-wybaczam.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'nie-wybaczam.html'));
 });
+
 });
 
 app.post('/login', loginRateLimited, (req, res) => {
