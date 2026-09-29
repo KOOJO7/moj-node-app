@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -7,11 +8,17 @@
 <meta name="theme-color" content="#070f0e">
 <title>Wejście — lecimyszacunek.pl</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
   :root {
     --bg: #070f0e;
@@ -26,7 +33,9 @@
     --sans: 'Inter', -apple-system, sans-serif;
   }
 
-  html { color-scheme: dark; }
+  html {
+    color-scheme: dark;
+  }
 
   body {
     min-height: 100vh;
@@ -45,16 +54,32 @@
     overflow-x: hidden;
   }
 
-  /* powolna, jedna, orkiestrowana animacja tła — "przypływ" o zmroku */
+  /* Tło */
   .tide {
-    position: fixed; inset: -20% -20% auto -20%; height: 140%;
-    background: radial-gradient(closest-side, rgba(63,143,138,0.10), transparent 70%);
+    position: fixed;
+    inset: -20% -20% auto -20%;
+    height: 140%;
+    background: radial-gradient(
+      closest-side,
+      rgba(63,143,138,0.10),
+      transparent 70%
+    );
     transform: translateY(0);
     animation: tide-drift 18s ease-in-out infinite alternate;
-    pointer-events: none; z-index: 0;
+    pointer-events: none;
+    z-index: 0;
   }
-  @keyframes tide-drift { from { transform: translateY(-2%); } to { transform: translateY(2%); } }
 
+  @keyframes tide-drift {
+    from {
+      transform: translateY(-2%);
+    }
+    to {
+      transform: translateY(2%);
+    }
+  }
+
+  /* Logo */
   .mark {
     position: fixed;
     top: 28px;
@@ -68,14 +93,222 @@
     letter-spacing: 0.01em;
     z-index: 2;
   }
-  .mark:hover { color: var(--ink); }
+
+  .mark:hover {
+    color: var(--ink);
+  }
+
   .mark .chip {
-    width: 7px; height: 7px;
+    width: 7px;
+    height: 7px;
     background: var(--gold);
     border-radius: 50%;
     box-shadow: 0 0 8px 1px rgba(209,162,74,0.55);
     flex-shrink: 0;
   }
+
+  /* =========================================
+     PRZYCISK JULCIA — PRAWY GÓRNY RÓG
+     ========================================= */
+
+  .julcia-button {
+    position: fixed;
+    top: 24px;
+    right: 28px;
+    z-index: 10;
+
+    border: 1px solid rgba(209,162,74,0.28);
+    background: rgba(7,15,14,0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    color: var(--gold-bright);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 500;
+
+    padding: 9px 14px;
+    border-radius: 8px;
+
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .julcia-button:hover {
+    background: rgba(209,162,74,0.10);
+    border-color: rgba(209,162,74,0.55);
+  }
+
+  .julcia-button:active {
+    transform: scale(0.97);
+  }
+
+  .julcia-button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }
+
+  /* =========================================
+     MODAL HASŁA JULCIA
+     ========================================= */
+
+  .julcia-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease;
+  }
+
+  .julcia-overlay.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .julcia-box {
+    width: 100%;
+    max-width: 340px;
+
+    padding: 25px;
+
+    background: #0b1513;
+    border: 1px solid rgba(242,239,230,0.11);
+    border-radius: 12px;
+
+    box-shadow:
+      0 20px 70px rgba(0,0,0,0.5);
+
+    transform: translateY(8px) scale(0.98);
+    transition: transform 0.2s ease;
+  }
+
+  .julcia-overlay.show .julcia-box {
+    transform: translateY(0) scale(1);
+  }
+
+  .julcia-title {
+    font-family: var(--serif);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--gold-bright);
+    margin-bottom: 7px;
+  }
+
+  .julcia-description {
+    color: var(--ink-dim);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .julcia-input {
+    width: 100%;
+
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+
+    padding: 11px 12px;
+    outline: none;
+
+    transition: border-color 0.2s ease;
+  }
+
+  .julcia-input:focus {
+    border-color: var(--gold);
+  }
+
+  .julcia-input::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .julcia-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .julcia-enter,
+  .julcia-cancel {
+    flex: 1;
+
+    border-radius: 7px;
+    padding: 10px 12px;
+
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+  }
+
+  .julcia-enter {
+    border: none;
+    background: linear-gradient(
+      180deg,
+      var(--gold-bright),
+      var(--gold)
+    );
+    color: #201603;
+  }
+
+  .julcia-enter:hover {
+    filter: brightness(1.08);
+  }
+
+  .julcia-cancel {
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink-dim);
+  }
+
+  .julcia-cancel:hover {
+    color: var(--ink);
+    border-color: rgba(242,239,230,0.25);
+  }
+
+  .julcia-error {
+    color: var(--bad);
+    font-size: 12px;
+    margin-top: 10px;
+
+    min-height: 1em;
+
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .julcia-error.show {
+    opacity: 1;
+  }
+
+  /* =========================================
+     GŁÓWNY PANEL
+     ========================================= */
 
   main {
     position: relative;
@@ -108,7 +341,11 @@
     max-width: 34ch;
   }
 
-  form { display: flex; flex-direction: column; gap: 6px; }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
 
   label {
     font-size: 12.5px;
@@ -119,112 +356,457 @@
     display: flex;
     align-items: flex-end;
     gap: 12px;
+
     border-bottom: 1px solid var(--line);
     padding-bottom: 12px;
+
     transition: border-color 0.2s ease;
   }
-  .field-row:focus-within { border-color: var(--gold); }
+
+  .field-row:focus-within {
+    border-color: var(--gold);
+  }
 
   input[type="password"] {
     flex: 1;
+
     background: transparent;
     border: none;
     outline: none;
+
     color: var(--ink);
     font-family: var(--sans);
     font-size: 20px;
     letter-spacing: 0.14em;
+
     padding: 6px 0 2px;
   }
-  input[type="password"]::placeholder { color: var(--ink-faint); letter-spacing: 0.14em; }
+
+  input[type="password"]::placeholder {
+    color: var(--ink-faint);
+    letter-spacing: 0.14em;
+  }
 
   button.enter {
     margin-top: 28px;
     width: 100%;
+
     padding: 13px 18px;
+
     border: none;
     border-radius: 8px;
-    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+
+    background: linear-gradient(
+      180deg,
+      var(--gold-bright),
+      var(--gold)
+    );
+
     color: #201603;
+
     font-family: var(--sans);
     font-size: 14.5px;
     font-weight: 600;
+
     cursor: pointer;
-    transition: filter 0.15s ease, transform 0.1s ease;
+
+    transition:
+      filter 0.15s ease,
+      transform 0.1s ease;
   }
-  button.enter:hover { filter: brightness(1.08); }
-  button.enter:active { transform: scale(0.99); }
-  button.enter:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  button.enter:hover {
+    filter: brightness(1.08);
+  }
+
+  button.enter:active {
+    transform: scale(0.99);
+  }
+
+  button.enter:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
 
   .error {
     font-size: 13px;
     color: var(--bad);
     margin-top: 14px;
+
     min-height: 1em;
+
     opacity: 0;
     transform: translateY(-2px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-  }
-  .error.show { opacity: 1; transform: translateY(0); }
 
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .error.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Telefon */
   @media (max-width: 480px) {
-    .mark { top: 20px; left: 20px; }
-    h1 { font-size: 29px; }
+    .mark {
+      top: 20px;
+      left: 20px;
+    }
+
+    .julcia-button {
+      top: 16px;
+      right: 16px;
+      padding: 8px 11px;
+      font-size: 11.5px;
+    }
+
+    h1 {
+      font-size: 29px;
+    }
+
+    main {
+      margin-top: 20px;
+    }
+
+    .julcia-box {
+      padding: 22px;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 </style>
 </head>
+
 <body>
 
 <div class="tide" aria-hidden="true"></div>
 
-<a href="/" class="mark"><span class="chip"></span>lecimyszacunek</a>
+<a href="/" class="mark">
+  <span class="chip"></span>
+  lecimyszacunek
+</a>
+
+
+<!-- PRZYCISK JULCIA -->
+<button
+  type="button"
+  class="julcia-button"
+  id="julciaButton"
+>
+  Julcia
+</button>
+
+
+<!-- OKNO Z HASŁEM -->
+<div
+  class="julcia-overlay"
+  id="julciaOverlay"
+  aria-hidden="true"
+>
+  <div class="julcia-box">
+
+    <h2 class="julcia-title">
+      Prywatne wejście
+    </h2>
+
+    <p class="julcia-description">
+      Wpisz klucz, żeby przejść dalej.
+    </p>
+
+    <form id="julciaForm">
+
+      <input
+        type="password"
+        id="julciaPassword"
+        class="julcia-input"
+        placeholder="Hasło"
+        autocomplete="off"
+      >
+
+      <div class="julcia-actions">
+
+        <button
+          type="button"
+          class="julcia-cancel"
+          id="julciaCancel"
+        >
+          Anuluj
+        </button>
+
+        <button
+          type="submit"
+          class="julcia-enter"
+        >
+          Wejdź
+        </button>
+
+      </div>
+
+      <p
+        class="julcia-error"
+        id="julciaError"
+      >
+        Złe hasło.
+      </p>
+
+    </form>
+
+  </div>
+</div>
+
+
+<!-- GŁÓWNA STRONA -->
 
 <main>
-  <p class="kicker">Panel prywatny</p>
-  <h1>Wpisz klucz,<br>żeby <span style="color:var(--ink)">wejść</span>.</h1>
-  <p class="sub">Kapitał, cel dzienny i historia transakcji czekają za tym jednym polem.</p>
 
-  <form id="loginForm" onsubmit="event.preventDefault(); login();">
-    <label for="pass">Klucz dostępu</label>
+  <p class="kicker">
+    Panel prywatny
+  </p>
+
+  <h1>
+    Wpisz klucz,<br>
+    żeby <span style="color:var(--ink)">wejść</span>.
+  </h1>
+
+  <p class="sub">
+    Kapitał, cel dzienny i historia transakcji
+    czekają za tym jednym polem.
+  </p>
+
+  <form
+    id="loginForm"
+    onsubmit="event.preventDefault(); login();"
+  >
+
+    <label for="pass">
+      Klucz dostępu
+    </label>
+
     <div class="field-row">
-      <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password" autofocus>
+
+      <input
+        type="password"
+        id="pass"
+        placeholder="••••••••"
+        autocomplete="current-password"
+        autofocus
+      >
+
     </div>
-    <button type="submit" class="enter">Zaloguj</button>
-    <p class="error" id="error">Zły klucz — spróbuj jeszcze raz.</p>
+
+    <button
+      type="submit"
+      class="enter"
+    >
+      Zaloguj
+    </button>
+
+    <p
+      class="error"
+      id="error"
+    >
+      Zły klucz — spróbuj jeszcze raz.
+    </p>
+
   </form>
+
 </main>
 
+
 <script>
+
+  /* =========================================
+     GŁÓWNE LOGOWANIE
+     ========================================= */
+
   async function login() {
+
     const passInput = document.getElementById('pass');
     const errorEl = document.getElementById('error');
     const btn = document.querySelector('button.enter');
+
     const pass = passInput.value;
+
     btn.disabled = true;
+
     try {
+
       const res = await fetch('/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pass })
+
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+          pass
+        })
       });
+
       if (res.ok) {
+
         window.location.href = '/panel';
         return;
+
       }
+
       throw new Error();
+
     } catch (e) {
+
       errorEl.classList.add('show');
+
       passInput.value = '';
       passInput.focus();
-      setTimeout(() => errorEl.classList.remove('show'), 3000);
+
+      setTimeout(() => {
+        errorEl.classList.remove('show');
+      }, 3000);
+
     } finally {
+
       btn.disabled = false;
+
     }
   }
+
+
+  /* =========================================
+     JULCIA
+     ========================================= */
+
+  const julciaButton =
+    document.getElementById('julciaButton');
+
+  const julciaOverlay =
+    document.getElementById('julciaOverlay');
+
+  const julciaForm =
+    document.getElementById('julciaForm');
+
+  const julciaPassword =
+    document.getElementById('julciaPassword');
+
+  const julciaError =
+    document.getElementById('julciaError');
+
+  const julciaCancel =
+    document.getElementById('julciaCancel');
+
+
+  /* Otwórz okno */
+
+  julciaButton.addEventListener('click', () => {
+
+    julciaOverlay.classList.add('show');
+
+    julciaOverlay.setAttribute(
+      'aria-hidden',
+      'false'
+    );
+
+    julciaPassword.value = '';
+    julciaError.classList.remove('show');
+
+    setTimeout(() => {
+      julciaPassword.focus();
+    }, 100);
+
+  });
+
+
+  /* Zamknij okno */
+
+  function closeJulcia() {
+
+    julciaOverlay.classList.remove('show');
+
+    julciaOverlay.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+  }
+
+
+  julciaCancel.addEventListener(
+    'click',
+    closeJulcia
+  );
+
+
+  /* Kliknięcie poza oknem */
+
+  julciaOverlay.addEventListener(
+    'click',
+    (event) => {
+
+      if (event.target === julciaOverlay) {
+        closeJulcia();
+      }
+
+    }
+  );
+
+
+  /* ESC */
+
+  document.addEventListener(
+    'keydown',
+    (event) => {
+
+      if (
+        event.key === 'Escape' &&
+        julciaOverlay.classList.contains('show')
+      ) {
+        closeJulcia();
+      }
+
+    }
+  );
+
+
+  /* Sprawdzanie hasła */
+
+  julciaForm.addEventListener(
+    'submit',
+    (event) => {
+
+      event.preventDefault();
+
+      const password = julciaPassword.value;
+
+      if (password === 'kochamkonrada') {
+
+        window.location.href = '/julcia.html';
+
+      } else {
+
+        julciaError.classList.add('show');
+
+        julciaPassword.value = '';
+        julciaPassword.focus();
+
+        setTimeout(() => {
+          julciaError.classList.remove('show');
+        }, 2500);
+
+      }
+
+    }
+  );
+
 </script>
+
 </body>
 </html>
+```
