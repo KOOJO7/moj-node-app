@@ -404,6 +404,7 @@ app.get('/api/market/:code', requireAuthApi, async (req, res) => {
         console.error(`Błąd pobierania rynku ${req.params.code}:`, err.message);
         res.status(502).json({ ok: false, error: 'Nie udało się pobrać notowania rynku' });
     }
+});
 
 function requireJulciaAuth(req, res, next) {
     res.setHeader('Cache-Control', 'no-store, must-revalidate');
@@ -414,8 +415,6 @@ function requireJulciaAuth(req, res, next) {
 
     return res.redirect('/');
 }
-    
-});
 
 app.post('/julcia-login', loginRateLimited, (req, res) => {
     const ip = req.ip || 'unknown';
@@ -445,9 +444,19 @@ app.get('/', (req, res) => {
     if (req.session && req.session.authenticated) return res.redirect('/panel');
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-app.get('/panel', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'panel.html')));
-app.get('/zapis', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'zapis.html')));
-app.get('/prognoza', requireAuthPage, (req, res) => res.sendFile(path.join(__dirname, 'prognoza.html')));
+
+app.get('/panel', requireAuthPage, (req, res) =>
+    res.sendFile(path.join(__dirname, 'panel.html'))
+);
+
+app.get('/zapis', requireAuthPage, (req, res) =>
+    res.sendFile(path.join(__dirname, 'zapis.html'))
+);
+
+app.get('/prognoza', requireAuthPage, (req, res) =>
+    res.sendFile(path.join(__dirname, 'prognoza.html'))
+);
+
 app.get('/julcia.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'julcia.html'));
 });
@@ -460,23 +469,33 @@ app.get('/nie-wybaczam.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'nie-wybaczam.html'));
 });
 
-});
-
 app.post('/login', loginRateLimited, (req, res) => {
     const ip = req.ip || 'unknown';
     const pass = req.body && req.body.pass;
-    if (typeof pass === 'string' && pass.length > 0 && timingSafeEquals(pass, ADMIN_PASSWORD)) {
+
+    if (typeof pass === 'string' && pass.length > 0 &&
+        timingSafeEquals(pass, ADMIN_PASSWORD)) {
+
         loginAttempts.delete(ip);
+
         req.session.regenerate(err => {
             if (err) return res.sendStatus(500);
+
             req.session.authenticated = true;
             res.sendStatus(200);
         });
+
         return;
     }
-    const rec = loginAttempts.get(ip) || { count: 0, resetAt: Date.now() + LOGIN_WINDOW_MS };
+
+    const rec = loginAttempts.get(ip) || {
+        count: 0,
+        resetAt: Date.now() + LOGIN_WINDOW_MS
+    };
+
     rec.count += 1;
     loginAttempts.set(ip, rec);
+
     res.sendStatus(401);
 });
 
