@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nie wybaczam</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;min-height:100%}
+body{
+  background-color:#fff3c4;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27200%27%20height%3D%27200%27%3E%3Ctext%20x%3D%2715%27%20y%3D%2755%27%20font-size%3D%2734%27%3E%F0%9F%8C%B9%3C/text%3E%3Ctext%20x%3D%27115%27%20y%3D%27100%27%20font-size%3D%2728%27%3E%F0%9F%8C%B9%3C/text%3E%3Ctext%20x%3D%2730%27%20y%3D%27165%27%20font-size%3D%2730%27%3E%F0%9F%8C%B9%3C/text%3E%3Ctext%20x%3D%27150%27%20y%3D%27185%27%20font-size%3D%2724%27%3E%F0%9F%8C%B9%3C/text%3E%3C/svg%3E");
+  background-size:200px 200px;
+  color:#e8629a;
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-style:italic;font-weight:300;
+  text-align:center;
+  min-height:100vh;
+  padding:40px 16px 60px;
+  box-sizing:border-box;
+  position:relative;
+  overflow-x:hidden;
+}
+/* male Pusheeny rozsypane po tle */
+.p{position:fixed;width:110px;height:auto;z-index:0;pointer-events:none}
+.p1{top:4%;left:3%;transform:rotate(-8deg)}
+.p2{top:8%;right:4%;transform:rotate(7deg)}
+.p3{top:45%;left:2%;transform:rotate(5deg)}
+.p4{top:50%;right:2%;transform:rotate(-6deg)}
+.p5{bottom:3%;left:8%;transform:rotate(-4deg)}
+.p6{bottom:4%;right:9%;transform:rotate(9deg)}
+@media(max-width:700px){.p{width:70px}}
+.content{position:relative;z-index:1;max-width:760px;margin:0 auto}
+h1{
+  font-weight:300;font-size:clamp(2.8rem,12vw,6.5rem);
+  letter-spacing:.03em;line-height:1.05;margin:.3em 0 .4em;
+  text-shadow:0 0 12px #fff3c4,0 0 24px #fff3c4,2px 2px 0 #fff;
+}
+p.msg{
+  font-weight:500;font-size:clamp(1.3rem,4.5vw,1.8rem);line-height:1.5;
+  margin:0 auto 1.6em;max-width:32em;
+  text-shadow:0 0 10px #fff3c4,0 0 20px #fff3c4;
+}
+.main-img{max-width:100%;width:420px;border-radius:20px;margin:0 auto 24px;display:block}
+.buttons{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:10px}
+.btn{
+  display:inline-block;font-family:inherit;font-style:italic;font-weight:600;
+  font-size:1.6rem;text-decoration:none;cursor:pointer;
+  padding:.6em 1.7em;border-radius:999px;border:2px solid #e8629a;
+  box-shadow:0 5px 0 #c7477e;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.no{background:#fff;color:#e8629a}
+.yes{background:#e8629a;color:#fff}
+.btn:hover{transform:translateY(-5px) scale(1.07) rotate(-2deg);box-shadow:0 10px 0 #c7477e,0 16px 26px rgba(232,98,154,.4)}
+.no:hover{background:#ffd3e6}
+.yes:hover{background:#d2508a}
+.btn:active{transform:translateY(4px) scale(.95);box-shadow:0 1px 0 #c7477e}
+</style>
+</head>
+<body>
+
+<!-- Pusheeny w tle: wrzuc pliki pusheen1.jpg ... pusheen6.jpg do tego samego folderu -->
+<img class="p p1" src="pusheen1.png" alt="" onerror="this.style.display='none'">
+<img class="p p2" src="pusheen2.png" alt="" onerror="this.style.display='none'">
+<img class="p p3" src="pusheen3.png" alt="" onerror="this.style.display='none'">
+<img class="p p4" src="pusheen4.png" alt="" onerror="this.style.display='none'">
+<img class="p p5" src="pusheen5.png" alt="" onerror="this.style.display='none'">
+<img class="p p6" src="pusheen6.png" alt="" onerror="this.style.display='none'">
+
+<div class="content">
+
+  <img class="main-img" src="imagine2.jpg" alt="">
+
+  <!-- ===== TU ZMIENIASZ TEKST ===== -->
+  <p class="msg">
+    tutaj tekst
+  </p>
+  <!-- ===== KONIEC TEKSTU ===== -->
+</div>
+
+</body>
+</html>
