@@ -404,7 +404,6 @@ app.get('/api/market/:code', requireAuthApi, async (req, res) => {
         console.error(`Błąd pobierania rynku ${req.params.code}:`, err.message);
         res.status(502).json({ ok: false, error: 'Nie udało się pobrać notowania rynku' });
     }
-});
 
 function requireJulciaAuth(req, res, next) {
     res.setHeader('Cache-Control', 'no-store, must-revalidate');
@@ -415,7 +414,30 @@ function requireJulciaAuth(req, res, next) {
 
     return res.redirect('/');
 }
+    
+});
 
+app.post('/julcia-login', loginRateLimited, (req, res) => {
+    const ip = req.ip || 'unknown';
+    const pass = req.body && req.body.pass;
+
+    if (pass === 'kochamkonrada') {
+        loginAttempts.delete(ip);
+        req.session.julciaAuthenticated = true;
+
+        return res.sendStatus(200);
+    }
+
+    const rec = loginAttempts.get(ip) || {
+        count: 0,
+        resetAt: Date.now() + LOGIN_WINDOW_MS
+    };
+
+    rec.count += 1;
+    loginAttempts.set(ip, rec);
+
+    return res.sendStatus(401);
+});
 
 // ─── STRONY ────────────────────────────────────────────────
 app.get('/', (req, res) => {
