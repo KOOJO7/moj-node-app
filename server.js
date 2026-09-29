@@ -402,7 +402,10 @@ app.get('/api/market/:code', requireAuthApi, async (req, res) => {
         res.json({ ok: true, ...data });
     } catch (err) {
         console.error(`Błąd pobierania rynku ${req.params.code}:`, err.message);
-        res.status(502).json({ ok: false, error: 'Nie udało się pobrać notowania rynku' });
+        res.status(502).json({
+            ok: false,
+            error: 'Nie udało się pobrać notowania rynku'
+        });
     }
 });
 
