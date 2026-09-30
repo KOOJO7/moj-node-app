@@ -3,7 +3,55 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
+const { Pool } = require('pg');
 const app = express();
+
+const db = new Pool({
+    host: process.env.PGHOST || '192.168.50.10',
+    port: Number(process.env.PGPORT || 5432),
+    database: process.env.PGDATABASE || 'trading',
+    user: process.env.PGUSER || 'appuser',
+    password: process.env.PGPASSWORD,
+    max: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000
+});
+
+// TUTAJ WKLEJ TEN KOD:
+async function initCapitalDb() {
+    const client = await db.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const result = await client.query(
+            'SELECT id FROM capital_state WHERE id = 1 FOR UPDATE'
+        );
+
+        if (result.rowCount === 0) {
+            await client.query(
+                `INSERT INTO capital_state
+                    (id, starting_capital, current_capital)
+                 VALUES
+                    (1, $1, $1)`,
+                [29.18]
+            );
+
+            console.log('PostgreSQL: utworzono stan kapitału 29.18');
+        } else {
+            console.log('PostgreSQL: stan kapitału już istnieje');
+        }
+
+        await client.query('COMMIT');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Błąd inicjalizacji PostgreSQL:', err);
+        throw err;
+    } finally {
+        client.release();
+    }
+}
+
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const SESSION_SECRET = process.env.SESSION_SECRET;
@@ -31,7 +79,7 @@ app.use(session({
     cookie: {
         httpOnly: true,
         sameSite: 'lax',
-        secure: IS_PROD,
+        secure: false,
         maxAge: 12 * 60 * 60 * 1000
     }
 }));
@@ -42,7 +90,7 @@ app.use((req, res, next) => {
     res.setHeader('Referrer-Policy', 'same-origin');
     res.setHeader(
         'Content-Security-Policy',
-        "default-src 'none'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; font-src 'self' data:;"
+        "default-src 'none'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://s3.tradingview.com; font-src 'self' data: https://*.tradingview.com; frame-src https://*.tradingview.com https://*.tradingview-widget.com; connect-src 'self' https://*.tradingview.com https://*.tradingview-widget.com; img-src 'self' data: https://*.tradingview.com https://*.tradingview-widget.com;"
     );
     next();
 });
@@ -96,16 +144,55 @@ function loginRateLimited(req, res, next) {
     const ip = req.ip || 'unknown';
     const now = Date.now();
     const rec = loginAttempts.get(ip);
+
     if (!rec || now > rec.resetAt) {
-        loginAttempts.set(ip, { count: 0, resetAt: now + LOGIN_WINDOW_MS });
+        loginAttempts.set(ip, {
+            count: 0,
+            resetAt: now + LOGIN_WINDOW_MS
+        });
     }
+
     const current = loginAttempts.get(ip);
+
     if (current.count >= LOGIN_MAX_ATTEMPTS) {
-        const waitMin = Math.ceil((current.resetAt - now) / 60000);
-        return res.status(429).json({ error: `Za dużo prób. Spróbuj za ~${waitMin} min.` });
+        const waitMin = Math.ceil(
+            (current.resetAt - now) / 60000
+        );
+
+        return res.status(429).json({
+            error: `Za dużo prób. Spróbuj za ~${waitMin} min.`
+        });
     }
+
     next();
 }
+
+app.post('/login', loginRateLimited, (req, res) => {
+    const pass = typeof req.body?.pass === 'string'
+        ? req.body.pass
+        : '';
+
+    if (!timingSafeEquals(pass, ADMIN_PASSWORD)) {
+        const ip = req.ip || 'unknown';
+        const rec = loginAttempts.get(ip) || {
+            count: 0,
+            resetAt: Date.now() + LOGIN_WINDOW_MS
+        };
+
+        rec.count++;
+        loginAttempts.set(ip, rec);
+
+        return res.status(401).json({
+            error: 'Nieprawidłowe hasło'
+        });
+    }
+
+    loginAttempts.delete(req.ip || 'unknown');
+
+    req.session.authenticated = true;
+
+    return res.json({ ok: true });
+});
 
 function timingSafeEquals(a, b) {
     const bufA = Buffer.from(String(a));
@@ -125,88 +212,8 @@ setInterval(() => {
 }, LOGIN_WINDOW_MS).unref();
 
 // ─── KAPITAŁ ───────────────────────────────────────────────
-const CAPITAL_FILE = path.join(__dirname, 'capital.json');
-const STARTING_CAPITAL = 29.18;
-let lastGoodCapital = null;
 
-function loadCapital() {
-    try {
-        const raw = fs.readFileSync(CAPITAL_FILE, 'utf8');
-        const data = JSON.parse(raw);
-        lastGoodCapital = data;
-        return data;
-    } catch (e) {
-        if (e.code === 'ENOENT') {
-            const init = { startingCapital: STARTING_CAPITAL, currentCapital: STARTING_CAPITAL, entries: [] };
-            saveCapital(init);
-            return init;
-        }
-        console.error('capital.json jest uszkodzony, zostawiam plik bez zmian:', e.message);
-        try { fs.copyFileSync(CAPITAL_FILE, CAPITAL_FILE + '.corrupt-' + Date.now()); } catch (_) {}
-        return lastGoodCapital || { startingCapital: STARTING_CAPITAL, currentCapital: STARTING_CAPITAL, entries: [] };
-    }
-}
 
-function saveCapital(data) {
-    const tmp = CAPITAL_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-    fs.renameSync(tmp, CAPITAL_FILE);
-    lastGoodCapital = data;
-}
-
-app.get('/api/capital', requireAuthApi, (req, res) => {
-    res.json(loadCapital());
-});
-
-app.post('/api/capital/entry', requireAuthApi, (req, res) => {
-    const { type, amount, note, market } = req.body;
-    if (!['trade', 'deposit'].includes(type)) {
-        return res.status(400).json({ error: 'Zły typ wpisu' });
-    }
-    const amt = Math.round(parseFloat(amount) * 100) / 100;
-    if (!isFinite(amt) || amt === 0) {
-        return res.status(400).json({ error: 'Podaj poprawną, niezerową kwotę' });
-    }
-    if (note && String(note).length > 200) {
-        return res.status(400).json({ error: 'Notatka za długa' });
-    }
-    if (market && String(market).length > 24) {
-        return res.status(400).json({ error: 'Nazwa rynku za długa' });
-    }
-
-    const data = loadCapital();
-    data.currentCapital = Math.round((data.currentCapital + amt) * 100) / 100;
-
-    const entry = {
-        id: Date.now(),
-        date: new Date().toISOString(),
-        type,
-        amount: amt,
-        note: (note || '').toString().trim(),
-        market: (market || '').toString().trim().slice(0, 24),
-        balanceAfter: data.currentCapital
-    };
-    data.entries.push(entry);
-    if (data.entries.length > 2000) data.entries.shift();
-
-    saveCapital(data);
-    res.json(data);
-});
-
-app.delete('/api/capital/entry/:id', requireAuthApi, (req, res) => {
-    const data = loadCapital();
-    if (data.entries.length === 0) {
-        return res.status(400).json({ error: 'Brak wpisów do cofnięcia' });
-    }
-    const last = data.entries[data.entries.length - 1];
-    if (String(last.id) !== req.params.id) {
-        return res.status(400).json({ error: 'Można cofnąć tylko ostatni wpis' });
-    }
-    data.entries.pop();
-    data.currentCapital = Math.round((data.currentCapital - last.amount) * 100) / 100;
-    saveCapital(data);
-    res.json(data);
-});
 
 // ─── IMPORT CSV Z BROKERA (Trading 212 / podobny eksport) ───
 const BROKER_SYMBOL_MAP = {
@@ -255,11 +262,18 @@ function normalizeBrokerDate(s) {
 }
 
 function parseBrokerCsv(text) {
-    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) throw new Error('Pusty lub niekompletny plik CSV');
+    const lines = String(text || '')
+        .replace(/^\uFEFF/, '')
+        .split(/\r?\n/)
+        .filter(l => l.trim());
+
+    if (lines.length < 2) {
+        throw new Error('Pusty lub niekompletny plik CSV');
+    }
 
     const headers = parseCsvLine(lines[0]).map(h => h.trim());
     const idx = (name) => headers.indexOf(name);
+
     const col = {
         recordType: idx('Record Type'),
         date: idx('Date (UTC)'),
@@ -271,113 +285,524 @@ function parseBrokerCsv(text) {
         txType: idx('Transaction type'),
         amount: idx('Amount (account currency)')
     };
-    if (col.recordType < 0) throw new Error('To nie wygląda na eksport brokera (brak kolumny Record Type)');
+
+    if (col.recordType < 0) {
+        throw new Error('To nie wygląda na eksport brokera (brak kolumny Record Type)');
+    }
+
+    if (col.date < 0) {
+        throw new Error('Brak kolumny Date (UTC)');
+    }
 
     const raw = [];
+
     for (let i = 1; i < lines.length; i++) {
         const cells = parseCsvLine(lines[i]);
-        const get = (c) => (c >= 0 && c < cells.length ? cells[c].trim() : '');
+
+        const get = (c) => {
+            if (c < 0 || c >= cells.length) return '';
+            return String(cells[c]).trim();
+        };
+
         const rt = get(col.recordType);
 
-        if (rt === 'Transaction' && get(col.txType) === 'Deposit') {
-            const amt = parseFloat(get(col.amount));
-            if (!isFinite(amt) || amt === 0) continue;
+        console.log(
+            'CSV RECORD:',
+            JSON.stringify({
+                recordType: rt,
+                txType: get(col.txType),
+                amount: get(col.amount),
+                totalResult: get(col.totalResult),
+                date: get(col.date),
+                dateClosed: get(col.dateClosed)
+            })
+        );
+
+        if (rt === 'Transaction') {
+            const txType = get(col.txType);
+            let amount = parseFloat(get(col.amount));
+
+            console.log(
+                'CSV TRANSACTION:',
+                JSON.stringify({
+                    date: get(col.date),
+                    type: txType,
+                    amount: get(col.amount)
+                })
+            );
+
+            if (!isFinite(amount) || amount === 0) continue;
+
             const date = normalizeBrokerDate(get(col.date));
             if (!date) continue;
-            raw.push({
-                date,
-                type: 'deposit',
-                amount: Math.round(amt * 100) / 100,
-                note: 'wpłata z brokera',
-                market: ''
-            });
-        } else if (rt === 'Closed position') {
-            const amt = parseFloat(get(col.totalResult));
-            if (!isFinite(amt) || amt === 0) continue;
-            const date = normalizeBrokerDate(get(col.dateClosed) || get(col.date));
+
+            if (txType === 'Deposit') {
+                amount = Math.round(amount * 100) / 100;
+
+                raw.push({
+                    date,
+                    type: 'deposit',
+                    amount,
+                    note: 'wpłata z brokera',
+                    market: ''
+                });
+
+                continue;
+            }
+
+            if (txType === 'Withdrawal' || txType === 'Withdraw') {
+                amount = Math.abs(amount) * -1;
+                amount = Math.round(amount * 100) / 100;
+
+                raw.push({
+                    date,
+                    type: 'deposit',
+                    amount,
+                    note: 'wypłata z brokera',
+                    market: ''
+                });
+
+                continue;
+            }
+
+            continue;
+        }
+
+        if (rt === 'Overnight interest') {
+            console.log(
+                'CSV OVERNIGHT:',
+                get(col.date),
+                get(col.symbol),
+                get(col.amount),
+                get(col.totalResult)
+            );
+            continue;
+        }
+
+        if (rt === 'Closed position') {
+            const amount = parseFloat(get(col.totalResult));
+
+            if (!isFinite(amount) || amount === 0) continue;
+
+            const date = normalizeBrokerDate(
+                get(col.dateClosed) || get(col.date)
+            );
+
             if (!date) continue;
+
             const sym = get(col.symbol).toUpperCase();
-            const market = (BROKER_SYMBOL_MAP[sym] || sym.replace(/[^A-Z0-9]/g, '').slice(0, 12)) || '';
-            const inst = get(col.instrument) || market;
+
+            const market =
+                (BROKER_SYMBOL_MAP[sym] ||
+                    sym.replace(/[^A-Z0-9]/g, '').slice(0, 12)) || '';
+
+            const instrument = get(col.instrument) || market;
             const direction = get(col.direction);
-            const note = (inst + (direction ? ' ' + direction : '')).trim().slice(0, 200);
+
+            const note = (
+                instrument +
+                (direction ? ' ' + direction : '')
+            ).trim().slice(0, 200);
+
             raw.push({
                 date,
                 type: 'trade',
-                amount: Math.round(amt * 100) / 100,
+                amount: Math.round(amount * 100) / 100,
                 note,
                 market
             });
+
+            continue;
         }
-        // Overnight interest: już wliczone w Total result zamkniętej pozycji — pomijamy
     }
 
-    if (raw.length === 0) throw new Error('Nie znaleziono depozytów ani zamkniętych pozycji w pliku');
+    if (raw.length === 0) {
+        throw new Error(
+            'Nie znaleziono wpłat, wypłat ani zamkniętych pozycji w pliku'
+        );
+    }
 
-    raw.sort((a, b) => a.date.localeCompare(b.date));
+    raw.sort((a, b) => {
+        const timeA = new Date(a.date).getTime();
+        const timeB = new Date(b.date).getTime();
 
-    let bal = 0;
-    const entries = raw.map((e, i) => {
-        bal = Math.round((bal + e.amount) * 100) / 100;
+        if (timeA !== timeB) {
+            return timeA - timeB;
+        }
+
+        return 0;
+    });
+
+    let balance = 0;
+
+    const entries = raw.map((entry, i) => {
+        balance = Math.round(
+            (balance + Number(entry.amount)) * 100
+        ) / 100;
+
         return {
-            id: Date.parse(e.date) + i,
-            date: e.date,
-            type: e.type,
-            amount: e.amount,
-            note: e.note,
-            market: e.market,
-            balanceAfter: bal
+            id: Date.parse(entry.date) + i,
+            date: entry.date,
+            type: entry.type,
+            amount: Number(entry.amount),
+            note: entry.note,
+            market: entry.market,
+            balanceAfter: balance
         };
     });
 
-    const trades = entries.filter(e => e.type === 'trade');
-    const deposits = entries.filter(e => e.type === 'deposit');
-    const totalTrade = trades.reduce((s, e) => s + e.amount, 0);
-    const totalDep = deposits.reduce((s, e) => s + e.amount, 0);
+    const deposits = entries.filter(
+        e => e.type === 'deposit' && e.amount > 0
+    );
+
+    const withdrawals = entries.filter(
+        e => e.type === 'deposit' && e.amount < 0
+    );
+
+    const trades = entries.filter(
+        e => e.type === 'trade'
+    );
+
+    const totalDeposits = deposits.reduce(
+        (sum, e) => sum + e.amount,
+        0
+    );
+
+    const totalWithdrawals = withdrawals.reduce(
+        (sum, e) => sum + e.amount,
+        0
+    );
+
+    const totalTrading = trades.reduce(
+        (sum, e) => sum + e.amount,
+        0
+    );
 
     return {
         startingCapital: 0,
-        currentCapital: bal,
+        currentCapital: Math.round(balance * 100) / 100,
         entries,
+
         summary: {
             deposits: deposits.length,
+            withdrawals: withdrawals.length,
             trades: trades.length,
-            totalDeposits: Math.round(totalDep * 100) / 100,
-            totalTrading: Math.round(totalTrade * 100) / 100,
-            finalCapital: bal
+            totalDeposits: Math.round(totalDeposits * 100) / 100,
+            totalWithdrawals: Math.round(totalWithdrawals * 100) / 100,
+            totalTrading: Math.round(totalTrading * 100) / 100,
+            finalCapital: Math.round(balance * 100) / 100
         }
     };
 }
 
-app.post('/api/capital/import-csv', requireAuthApi, (req, res) => {
+async function getCapital() {
+    const stateResult = await db.query(`
+        SELECT starting_capital, current_capital
+        FROM capital_state
+        WHERE id = 1
+    `);
+
+    if (stateResult.rowCount === 0) {
+        throw new Error('Brak rekordu capital_state');
+    }
+
+    const entriesResult = await db.query(`
+        SELECT
+            id,
+            date,
+            type,
+            amount,
+            note,
+            market,
+            balance_after
+        FROM capital_entries
+        ORDER BY date ASC, id ASC
+    `);
+
+    const state = stateResult.rows[0];
+
+    return {
+        startingCapital: Number(state.starting_capital),
+        currentCapital: Number(state.current_capital),
+        entries: entriesResult.rows.map(row => ({
+            id: Number(row.id),
+            date: new Date(row.date).toISOString(),
+            type: row.type,
+            amount: Number(row.amount),
+            note: row.note,
+            market: row.market,
+            balanceAfter: Number(row.balance_after)
+        }))
+    };
+}
+
+app.get('/api/capital', requireAuthApi, async (req, res) => {
     try {
-        const csv = req.body && req.body.csv;
-        if (typeof csv !== 'string' || csv.length < 20) {
-            return res.status(400).json({ error: 'Brak treści CSV' });
-        }
-        if (csv.length > 1.5 * 1024 * 1024) {
-            return res.status(400).json({ error: 'Plik za duży (max ~1.5 MB)' });
+        const data = await getCapital();
+        res.json(data);
+    } catch (err) {
+        console.error('GET /api/capital:', err);
+        res.status(500).json({
+            error: 'Błąd odczytu kapitału'
+        });
+    }
+});
+
+app.post('/api/capital/entry', requireAuthApi, async (req, res) => {
+    const { type, amount, note, market } = req.body;
+
+    if (!['trade', 'deposit'].includes(type)) {
+        return res.status(400).json({
+            error: 'Zły typ wpisu'
+        });
+    }
+
+    const amt = Math.round(parseFloat(amount) * 100) / 100;
+
+    if (!isFinite(amt) || amt === 0) {
+        return res.status(400).json({
+            error: 'Podaj poprawną, niezerową kwotę'
+        });
+    }
+
+    if (note && String(note).length > 200) {
+        return res.status(400).json({
+            error: 'Notatka za długa'
+        });
+    }
+
+    if (market && String(market).length > 24) {
+        return res.status(400).json({
+            error: 'Nazwa rynku za długa'
+        });
+    }
+
+    const client = await db.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const stateResult = await client.query(`
+            SELECT current_capital
+            FROM capital_state
+            WHERE id = 1
+            FOR UPDATE
+        `);
+
+        if (stateResult.rowCount === 0) {
+            throw new Error('Brak rekordu capital_state');
         }
 
+        const currentCapital =
+            Number(stateResult.rows[0].current_capital);
+
+        const newCapital =
+            Math.round((currentCapital + amt) * 100) / 100;
+
+        const entryId = Date.now();
+
+        await client.query(`
+            INSERT INTO capital_entries
+                (id, date, type, amount, note, market, balance_after)
+            VALUES
+                ($1, NOW(), $2, $3, $4, $5, $6)
+        `, [
+            entryId,
+            type,
+            amt,
+            (note || '').toString().trim(),
+            (market || '').toString().trim().slice(0, 24),
+            newCapital
+        ]);
+
+        await client.query(`
+            UPDATE capital_state
+            SET current_capital = $1
+            WHERE id = 1
+        `, [newCapital]);
+
+        await client.query('COMMIT');
+
+        const data = await getCapital();
+        res.json(data);
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('POST /api/capital/entry:', err);
+
+        res.status(500).json({
+            error: 'Błąd zapisu kapitału'
+        });
+
+    } finally {
+        client.release();
+    }
+});
+
+app.delete('/api/capital/entry/:id', requireAuthApi, async (req, res) => {
+    const client = await db.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const lastResult = await client.query(`
+            SELECT id, amount
+            FROM capital_entries
+            ORDER BY date DESC, id DESC
+            LIMIT 1
+            FOR UPDATE
+        `);
+
+        if (lastResult.rowCount === 0) {
+            await client.query('ROLLBACK');
+
+            return res.status(400).json({
+                error: 'Brak wpisów do cofnięcia'
+            });
+        }
+
+        const last = lastResult.rows[0];
+
+        if (String(last.id) !== req.params.id) {
+            await client.query('ROLLBACK');
+
+            return res.status(400).json({
+                error: 'Można cofnąć tylko ostatni wpis'
+            });
+        }
+
+        const stateResult = await client.query(`
+            SELECT current_capital
+            FROM capital_state
+            WHERE id = 1
+            FOR UPDATE
+        `);
+
+        if (stateResult.rowCount === 0) {
+            throw new Error('Brak rekordu capital_state');
+        }
+
+        const currentCapital =
+            Number(stateResult.rows[0].current_capital);
+
+        const newCapital =
+            Math.round(
+                (currentCapital - Number(last.amount)) * 100
+            ) / 100;
+
+        await client.query(`
+            DELETE FROM capital_entries
+            WHERE id = $1
+        `, [last.id]);
+
+        await client.query(`
+            UPDATE capital_state
+            SET current_capital = $1
+            WHERE id = 1
+        `, [newCapital]);
+
+        await client.query('COMMIT');
+
+        const data = await getCapital();
+        res.json(data);
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('DELETE /api/capital/entry/:id:', err);
+
+        res.status(500).json({
+            error: 'Błąd cofania wpisu'
+        });
+
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/capital/import-csv', requireAuthApi, async (req, res) => {
+    const csv = req.body && req.body.csv;
+
+    if (typeof csv !== 'string' || csv.length < 20) {
+        return res.status(400).json({ error: 'Brak treści CSV' });
+    }
+
+    if (csv.length > 1.5 * 1024 * 1024) {
+        return res.status(400).json({
+            error: 'Plik za duży (max ~1.5 MB)'
+        });
+    }
+
+    try {
         const parsed = parseBrokerCsv(csv);
-        try {
-            const prev = loadCapital();
-            fs.writeFileSync(
-                CAPITAL_FILE + '.bak-' + Date.now(),
-                JSON.stringify(prev, null, 2)
-            );
-        } catch (_) {}
+        const client = await db.connect();
 
-        const data = {
-            startingCapital: parsed.startingCapital,
-            currentCapital: parsed.currentCapital,
-            entries: parsed.entries
-        };
-        saveCapital(data);
-        res.json({ ok: true, ...data, summary: parsed.summary });
+        try {
+            await client.query('BEGIN');
+
+            const startingCapital = 0;
+
+            await client.query(`
+                DELETE FROM capital_entries
+            `);
+
+            let balance = startingCapital;
+
+            for (const entry of parsed.entries) {
+                balance = Math.round(
+                    (balance + Number(entry.amount)) * 100
+                ) / 100;
+
+                await client.query(`
+                    INSERT INTO capital_entries
+                        (id, date, type, amount, note, market, balance_after)
+                    VALUES
+                        ($1, $2, $3, $4, $5, $6, $7)
+                `, [
+                    entry.id,
+                    entry.date,
+                    entry.type,
+                    entry.amount,
+                    entry.note,
+                    entry.market,
+                    balance
+                ]);
+            }
+
+            await client.query(`
+                UPDATE capital_state
+                SET
+                    starting_capital = $1,
+                    current_capital = $2
+                WHERE id = 1
+            `, [
+                startingCapital,
+                balance
+            ]);
+
+            await client.query('COMMIT');
+
+            const data = await getCapital();
+
+            res.json({
+                ok: true,
+                ...data,
+                summary: {
+                    ...parsed.summary,
+                    startingCapital,
+                    finalCapital: balance
+                }
+            });
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
     } catch (e) {
-        console.error('import-csv:', e.message);
-        res.status(400).json({ error: e.message || 'Błąd importu CSV' });
+        console.error('import-csv:', e);
+        res.status(400).json({
+            error: e.message || 'Błąd importu CSV'
+        });
     }
 });
 
@@ -481,6 +906,10 @@ app.get('/prognoza', requireAuthPage, (req, res) =>
     res.sendFile(path.join(__dirname, 'prognoza.html'))
 );
 
+app.get('/rynki', requireAuthPage, (req, res) =>
+    res.sendFile(path.join(__dirname, 'rynki.html'))
+);
+
 app.get('/julcia.html', requireJulciaAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'julcia.html'));
 });
@@ -525,4 +954,64 @@ app.get('/logout', (req, res) => {
 app.use((req, res) => res.redirect('/'));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Nasłuchuję na porcie ${PORT}`));
+
+initCapitalDb()
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`Nasłuchuję na porcie ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('Nie można uruchomić aplikacji:', err);
+        process.exit(1);
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

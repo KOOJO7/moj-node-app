@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#070f0e">
+
+<title>Rynki — lecimyszacunek.pl</title>
+
+<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
+<link rel="stylesheet" href="style.css">
+<script src="app.js"></script>
+
+<style>
+  .markets-page {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .markets-intro {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .markets-heading h2 {
+    margin: 0;
+    font-family: Fraunces, Georgia, serif;
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .markets-heading p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .market-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .market-button {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 9px;
+    padding: 9px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .18s ease;
+  }
+
+  .market-button:hover {
+    border-color: var(--gold);
+    transform: translateY(-1px);
+  }
+
+  .market-button.active {
+    background: var(--gold);
+    color: #07100e;
+    border-color: var(--gold);
+  }
+
+  .chart-panel {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .chart-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+  }
+
+  .chart-symbol {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .chart-symbol .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 12px rgba(214, 176, 92, .5);
+  }
+
+  .chart-symbol strong {
+    font-size: 16px;
+  }
+
+  .chart-symbol span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .chart-container {
+    width: 100%;
+    height: min(72vh, 760px);
+    min-height: 520px;
+    background: #070f0e;
+  }
+
+  #tradingview_chart {
+    width: 100%;
+    height: 100%;
+  }
+
+  .market-note {
+    padding: 12px 20px 16px;
+    color: var(--muted);
+    font-size: 11px;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 700px) {
+    .chart-container {
+      min-height: 420px;
+      height: 65vh;
+    }
+
+    .markets-heading h2 {
+      font-size: 23px;
+    }
+
+    .market-button {
+      padding: 8px 11px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<aside class="side" id="side"></aside>
+<header class="top" id="topbar"></header>
+
+<main class="wide">
+  <div class="markets-page">
+
+    <section class="panel">
+      <div class="markets-intro">
+        <div class="markets-heading">
+          <h2>Rynki</h2>
+          <p>Notowania i wykresy na żywo</p>
+        </div>
+
+        <div class="market-buttons" id="marketButtons">
+          <button class="market-button active" data-symbol="CAPITALCOM:GOLD" data-name="Złoto">
+            Złoto
+          </button>
+
+          <button class="market-button" data-symbol="CAPITALCOM:DE40" data-name="DAX">
+            DAX
+          </button>
+
+          <button class="market-button" data-symbol="CAPITALCOM:US100" data-name="US100">
+            US100
+          </button>
+
+          <button class="market-button" data-symbol="CAPITALCOM:US500" data-name="US500">
+            US500
+          </button>
+
+          <button class="market-button" data-symbol="CAPITALCOM:US30" data-name="US30">
+            US30
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel chart-panel">
+
+      <div class="chart-header">
+        <div class="chart-symbol">
+          <span class="dot"></span>
+          <div>
+            <strong id="currentMarket">Złoto</strong>
+            <span>TradingView · dane rynkowe</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div id="tradingview_chart"></div>
+      </div>
+
+      <div class="market-note">
+        Wykres dostarczany przez TradingView. Notowania mogą różnić się od kwotowań używanych przez brokera.
+      </div>
+
+    </section>
+
+  </div>
+</main>
+
+<script>
+LYS.mountShell({
+  active: 'rynki',
+  title: 'Rynki',
+  sub: 'Obserwuj rynek. Reaguj na okazję.'
+});
+
+const buttons = document.querySelectorAll('.market-button');
+const currentMarket = document.getElementById('currentMarket');
+
+let currentSymbol = 'CAPITALCOM:GOLD';
+
+function loadTradingView(symbol) {
+  currentSymbol = symbol;
+
+  const container = document.getElementById('tradingview_chart');
+  container.innerHTML = '';
+
+  const script = document.createElement('script');
+
+  script.src =
+    'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+
+  script.type = 'text/javascript';
+  script.async = true;
+
+  script.innerHTML = JSON.stringify({
+    autosize: true,
+    symbol: symbol,
+    interval: '15',
+    timezone: 'Europe/Warsaw',
+    theme: 'dark',
+    style: '1',
+    locale: 'pl',
+    enable_publishing: false,
+    allow_symbol_change: true,
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    calendar: false,
+    support_host: 'https://www.tradingview.com'
+  });
+
+  container.appendChild(script);
+}
+
+buttons.forEach(button => {
+  button.addEventListener('click', () => {
+
+    buttons.forEach(b => b.classList.remove('active'));
+    button.classList.add('active');
+
+    currentMarket.textContent = button.dataset.name;
+
+    loadTradingView(button.dataset.symbol);
+  });
+});
+
+loadTradingView(currentSymbol);
+</script>
+
+</body>
+</html>

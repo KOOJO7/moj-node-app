@@ -420,7 +420,8 @@
     const nav = [
       { key: 'panel',    href: '/panel',    label: 'Panel',    ico: 'dashboard' },
       { key: 'zapis',    href: '/zapis',    label: 'Zapis',    ico: 'edit' },
-      { key: 'prognoza', href: '/prognoza', label: 'Prognoza', ico: 'trend' }
+      { key: 'prognoza', href: '/prognoza', label: 'Prognoza', ico: 'trend' },
+      { key: 'rynki',    href: '/rynki',    label: 'Rynki',    ico: 'globe' }
     ];
     const side = document.getElementById('side');
     if (side) {
