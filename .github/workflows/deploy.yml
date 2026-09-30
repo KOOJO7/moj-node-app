@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy application
+        shell: bash
+        run: |
+          set -e
+
+          cd /opt/moj-node-app
+
+          git fetch origin main
+          git reset --hard origin/main
+
+          npm install
+
+          node --check server.js
+
+          sudo systemctl restart moj-node-app
+
+          sleep 2
+
+          sudo systemctl --no-pager --full status moj-node-app
