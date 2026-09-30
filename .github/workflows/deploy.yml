@@ -24,8 +24,8 @@ jobs:
 
           node --check server.js
 
-          sudo systemctl restart moj-node-app
+          sudo /bin/systemctl restart moj-node-app
 
           sleep 2
 
-          sudo systemctl --no-pager --full status moj-node-app
+          sudo /bin/systemctl --no-pager --full status moj-node-app
